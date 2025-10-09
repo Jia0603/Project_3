@@ -1,5 +1,5 @@
 project_3_temp_simulation/
-├── core/                  # 基础任务核心代码（3人负责）
+├── core/                  # 基础任务核心代码（3人负责）A B C
 │   ├── matrix_builder.py  # 系数矩阵构造（对应Task1）
 │   ├── mpi_solver.py      # MPI并行迭代求解（核心计算）
 │   ├── visualizer.py      # 温度可视化与供暖判断（对应Task2、3）
