@@ -48,6 +48,7 @@ Neumann边界会被包含用来求解
 **************** mpi_solver.py / main.py ****************
 
 运行： mpiexec -n 4 python main.py
+
 结果： 
 1. 3个房间的温度场，分别保存在u1.npy, u2.npy, u3.npy中；
 2. gamma1.npy / gamma2.npy两个子域接口的温度场；
