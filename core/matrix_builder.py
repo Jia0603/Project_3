@@ -211,3 +211,35 @@ def _get_bc_value(value, index):
         return value[index]
     else:
         return value
+
+
+def print_laplace_matrix(A, room_id, nx_solve, ny_solve, h):
+    """
+    Print detailed information about the Laplace matrix
+    
+    Parameters:
+        A : Laplace matrix
+        room_id : Room ID (string, e.g. "room1")
+        nx_solve : Number of grid points in x-direction
+        ny_solve : Number of grid points in y-direction
+        h : Grid spacing
+    """
+    print(f"\n{'='*70}")
+    print(f"Room: {room_id}")
+    print(f"Grid spacing h: {h}")
+    print(f"Solution domain size: nx_solve = {nx_solve}, ny_solve = {ny_solve}")
+    print(f"Matrix dimension: {A.shape[0]} × {A.shape[1]}")
+    print(f"{'='*70}")
+    
+    # Set numpy print options
+    np.set_printoptions(precision=4, suppress=True, linewidth=150, threshold=10000)
+    
+    print("Laplace Matrix A:")
+    print(A)
+    
+    # Print matrix statistics
+    print(f"\nMatrix Statistics:")
+    print(f"  - Diagonal elements range: [{np.min(np.diag(A)):.4f}, {np.max(np.diag(A)):.4f}]")
+    print(f"  - Number of non-zero elements: {np.count_nonzero(A)}")
+    print(f"  - Matrix sparsity: {100 * (1 - np.count_nonzero(A) / A.size):.2f}%")
+    print(f"{'='*70}\n")
