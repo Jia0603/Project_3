@@ -11,3 +11,35 @@ project_3_temp_simulation/
 │   ├── boundary_config.py # 边界条件配置（A）
 │   └── utils.py           # 网格计算、数据格式转换工具(A)
 └── main.py                # 主程序（B）
+
+初始化：
+
+from common.utils import *
+from common.boundary_config import *
+from core.matrix_builder import *
+
+dx = dy = 1/20
+omega = 0.8
+
+gamma1, gamma2, interface_info = initialize_interface_variables(dx, dy)
+
+info1 = get_room_grid_info("room1", dx, dy)
+info2 = get_room_grid_info("room2", dx, dy)
+info3 = get_room_grid_info("room3", dx, dy)
+
+获取边界信息
+
+get_boundary_conditions("room2", gamma1, gamma2)
+
+拉普拉斯方程A,b
+
+A2, nx_solve2, ny_solve2 = build_laplace_matrix_mixed(info2["Nx"], info2["Ny"], dx, bc2[0])
+
+b2 = build_b_mixed(info2["Nx"], info2["Ny"], dx, bc2[0], bc2[1])
+
+u2 = np.linalg.solve(A2, b2).reshape(nx_solve2, ny_solve2)
+
+
+Dirichlet条件下，A2尺寸是Nx-2, Ny-2不包含边界
+
+Neumann边界会被包含用来求解
