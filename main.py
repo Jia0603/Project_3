@@ -171,7 +171,7 @@ def main():
     print(f"Saved figure: {room2_path}")
 
     # 保存Room3图像
-    plt.imshow(u3_full, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+    plt.imshow(u3_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
     plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room3 Temperature (with boundaries)")
     room3_path = os.path.join(out_dir, "room3.png")
