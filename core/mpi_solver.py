@@ -16,7 +16,16 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy):
     A, nx_solve, ny_solve = build_laplace_matrix_mixed(info["Nx"], info["Ny"], dx, bc_types)
     b = build_b_mixed(info["Nx"], info["Ny"], dx, bc_types, bc_values)
 
-    u = np.linalg.solve(A, b).reshape(nx_solve, ny_solve)
+    # 检查矩阵维度
+    if A.shape[0] != len(b):
+        raise ValueError(f"{room_id}: 矩阵维度不匹配! A: {A.shape}, b: {len(b)}")
+    
+    # 检查矩阵条件数
+    cond = np.linalg.cond(A)
+    if cond > 1e10:
+        print(f"警告：{room_id} 矩阵条件数很大: {cond:.2e}")
+    
+    u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
     return u
 
 
@@ -97,7 +106,7 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
         room_id = room_id_map[rank]
 
         # 迭代阶段：接收接口温度、求解子域、发送解给主进程
-        while True:
+        for _ in range(num_iters):
             # 接收主进程广播的接口温度
             gamma1 = comm.bcast(None, root=0)
             gamma2 = comm.bcast(None, root=0)
@@ -109,12 +118,13 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
             comm.send(u, dest=0, tag=TAG_G1_SEND)
 
             # 检查是否收到结束指令
-            if comm.iprobe(source=0, tag=TAG_DONE):
-                _ = comm.recv(source=0, tag=TAG_DONE)
-                break
+        
+        _ = comm.recv(source=0, tag=TAG_DONE)
 
-        # 最终阶段：使用最终接口温度求解，发送最终解给主进程
+        # 最终阶段：接收最终接口温度，求解并发送最终解
+        gamma1 = comm.bcast(None, root=0)
+        gamma2 = comm.bcast(None, root=0)
         final_u = _solve_room(room_id, gamma1, gamma2, dx, dy)
         comm.send(final_u, dest=0, tag=TAG_G2_SEND)
-
+        
         return None

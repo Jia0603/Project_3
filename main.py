@@ -96,7 +96,7 @@ def main():
     np.save(os.path.join(out_dir, "gamma1.npy"), gamma1)
     np.save(os.path.join(out_dir, "gamma2.npy"), gamma2)
     
-    '''
+    
     # 主进程可视化（若有matplotlib）
     def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr):
         """重构包含边界的完整温度场（用于可视化）"""
@@ -105,14 +105,15 @@ def main():
         bc_types, bc_values = get_boundary_conditions(room_id, gamma1_arr, gamma2_arr, dx, dy)
 
         # 确定求解域索引（与matrix_builder逻辑一致）
-        i_start = 1 if bc_types.get("left") == "Dirichlet" else 0
-        i_end = Nx - 1 if bc_types.get("right") == "Dirichlet" else Nx
-        j_start = 1 if bc_types.get("bottom") == "Dirichlet" else 0
-        j_end = Ny - 1 if bc_types.get("top") == "Dirichlet" else Ny
+        i_start = 1 
+        i_end = Nx - 1 
+        j_start = 1 
+        j_end = Ny - 1 
 
         # 初始化完整温度场并填充内部求解结果
         u_full = np.full((Nx, Ny), np.nan, dtype=float)
-        u_full[i_start:i_end, j_start:j_end] = u_interior
+        # u_interior 现在是 (ny_solve, nx_solve)，需要转置为 (nx_solve, ny_solve)
+        u_full[i_start:i_end, j_start:j_end] = u_interior.T
 
         # 辅助函数：获取边界值（兼容标量/数组）
         def get_val(v, idx):
@@ -154,25 +155,30 @@ def main():
 
     # 保存Room1图像
     plt.imshow(u1_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+    plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room1 Temperature (with boundaries)")
     room1_path = os.path.join(out_dir, "room1.png")
     plt.savefig(room1_path, dpi=200); plt.close()
     print(f"Saved figure: {room1_path}")
 
     # 保存Room2图像
+    plt.figure(figsize=(4, 8))  # 长方形：长宽比 2:1
     plt.imshow(u2_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+    plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room2 Temperature (with boundaries)")
     room2_path = os.path.join(out_dir, "room2.png")
     plt.savefig(room2_path, dpi=200); plt.close()
     print(f"Saved figure: {room2_path}")
 
     # 保存Room3图像
-    plt.imshow(u3_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+    plt.imshow(u3_full, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+    plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room3 Temperature (with boundaries)")
     room3_path = os.path.join(out_dir, "room3.png")
     plt.savefig(room3_path, dpi=200); plt.close()
     print(f"Saved figure: {room3_path}")
-    '''
+    
+
 
 if __name__ == "__main__":
     main()
