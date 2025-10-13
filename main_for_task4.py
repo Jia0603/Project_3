@@ -170,6 +170,8 @@ def main(apt_new=False, dx=None, dy=None, omega=0.8, num_iters=10, heater_temp=N
     u1_full = reconstruct_full(u1, "room1", gamma1, gamma2, gamma3)
     u2_full = reconstruct_full(u2, "room2", gamma1, gamma2, gamma3)
     u3_full = reconstruct_full(u3, "room3", gamma1, gamma2, gamma3)
+
+
 """
     # 统一色轴范围（匹配文档中边界温度：5℃-40℃）
     vmin, vmax = 5.0, 40.0
