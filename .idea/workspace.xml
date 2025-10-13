@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="36929466-f7ea-4e5b-9536-2ca91899fa62" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/project_3.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/gamma1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma1.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/gamma2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma2.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room1.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room2.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room3.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room3.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/u1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u1.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/u2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u2.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/u3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u3.npy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
