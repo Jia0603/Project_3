@@ -4,22 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="36929466-f7ea-4e5b-9536-2ca91899fa62" name="更改" comment="运行了一下代码">
-      <change afterPath="$PROJECT_DIR$/main_for_task4.py" afterDir="false" />
+    <list default="true" id="36929466-f7ea-4e5b-9536-2ca91899fa62" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/core/params_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/visualizer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/gamma1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/gamma1.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/gamma2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/gamma2.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/gamma3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/gamma3.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room1.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room2.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room3.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room3.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room4.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/u1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/u1.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/u2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/u2.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/u3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/u3.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/u4.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/u4.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/boundary_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/boundary_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/gamma1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma1.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/gamma2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma2.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room1.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room2.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/room3.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room3.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u1.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u2.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u3.npy" afterDir="false" />
@@ -61,26 +58,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMThirdPartyAiProvidersConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.main.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true"
   }
-}</component>
-  <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
-    </key>
-  </component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-164cda30dcd9-0af03a5fa574-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26830.99" />
+        <option value="bundled-python-sdk-7e47963ff851-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.515" />
       </set>
     </attachedChunks>
   </component>
@@ -92,19 +85,6 @@
       <option name="presentableId" value="Default" />
       <updated>1760021364128</updated>
     </task>
-    <task id="LOCAL-00001" summary="增加requirement和notebook">
-      <option name="closed" value="true" />
-      <created>1760349993319</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1760349993319</updated>
-    </task>
-    <option name="localTasksCounter" value="2" />
     <servers />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="增加requirement和notebook" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加requirement和notebook" />
   </component>
 </project>

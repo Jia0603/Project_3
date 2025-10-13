@@ -2,10 +2,9 @@
 # 采用数学坐标系，从下往上，从左往右
 
 import numpy as np
-from .utils import (
-    HEATER_TEMP, WINDOW_TEMP, WALL_TEMP, INTERFACE_INIT_TEMP,
-    get_interface_grid_info, get_room_grid_info
-)
+from . import utils
+from .utils import get_interface_grid_info, get_room_grid_info
+
 
 def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=None):
     """
@@ -30,10 +29,10 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
             "bottom": "Dirichlet",
         }
         bc_values = {
-            "left":   HEATER_TEMP,    
+            "left":   utils.HEATER_TEMP,
             "right":  gamma1,         
-            "top":    WALL_TEMP,      
-            "bottom": WALL_TEMP,
+            "top":    utils.WALL_TEMP,
+            "bottom": utils.WALL_TEMP,
         }
         return bc_types, bc_values
 
@@ -49,18 +48,18 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
         
         left_bc = np.zeros(Ny_room2)
         left_bc[:Ny_interface] = gamma1  # bottom to the middle
-        left_bc[Ny_interface:] = WALL_TEMP  
+        left_bc[Ny_interface:] = utils.WALL_TEMP
         
         if gamma3 is not None: # if interface with room4 exists
             Ny_interface_new = interface_info['Ny_interface'][1]  # Iterface with room 4
-            right_bc = np.full(Ny_room2, WALL_TEMP)
-            right_bc[:-Ny_interface-Ny_interface_new] = WALL_TEMP  # wall temp
+            right_bc = np.full(Ny_room2, utils.WALL_TEMP)
+            right_bc[:-Ny_interface-Ny_interface_new] = utils.WALL_TEMP  # wall temp
             right_bc[-Ny_interface:] = gamma2     # interface with room3
             right_bc[-(Ny_interface + Ny_interface_new):-Ny_interface] = gamma3  # interface with room4
             # print(f"DEBUG: Running NEW apartment layout with Room4")
 
         else: # if 2 bedroom apt for project 3
-            right_bc = np.full(Ny_room2, WALL_TEMP)
+            right_bc = np.full(Ny_room2, utils.WALL_TEMP)
             right_bc[-Ny_interface:] = gamma2     # the middle to the top
             # print(f"DEBUG: Running OLD apartment layout - only Room3 interface")
   
@@ -73,8 +72,8 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
         bc_values = {
             "left":   left_bc,        
             "right":  right_bc,      
-            "top":    HEATER_TEMP,    
-            "bottom": WINDOW_TEMP,    
+            "top":    utils.HEATER_TEMP,
+            "bottom": utils.WINDOW_TEMP,
         }
         # print(f"DEBUG Room2: Ny_room2={Ny_room2}, Ny_interface={Ny_interface}")
         # print(f"DEBUG Room2 right_bc: {right_bc}")
@@ -91,9 +90,9 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
         }
         bc_values = {
             "left":   gamma2,        
-            "right":  HEATER_TEMP,    
-            "top":    WALL_TEMP,
-            "bottom": WALL_TEMP,
+            "right":  utils.HEATER_TEMP,
+            "top":    utils.WALL_TEMP,
+            "bottom": utils.WALL_TEMP,
         }
         return bc_types, bc_values
     
@@ -107,9 +106,9 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
         }
         bc_values = {
             "left":   gamma3,        
-            "right":  WALL_TEMP,    
-            "top":    WALL_TEMP,
-            "bottom": HEATER_TEMP,
+            "right":  utils.WALL_TEMP,
+            "top":    utils.WALL_TEMP,
+            "bottom": utils.HEATER_TEMP,
         }
         return bc_types, bc_values
     

@@ -14,9 +14,24 @@ DEFAULT_DX = 1/20
 DEFAULT_DY = 1/20           
 
 # Boundary conditions
-HEATER_TEMP = 40.0          
+HEATER_TEMP = 40.0
 WINDOW_TEMP = 5.0           
-WALL_TEMP = 15.0            
+WALL_TEMP = 15.0
+
+def set_boundary_conditions(heater=None, window=None, wall=None):###############这一段是我额外加的，为了能在main里改这里的参
+    """
+    Allow dynamic override of boundary temperatures.
+    Example:
+        set_boundary_conditions(heater=45, window=10)
+    """
+    global HEATER_TEMP, WINDOW_TEMP, WALL_TEMP
+    if heater is not None:
+        HEATER_TEMP = float(heater)
+    if window is not None:
+        WINDOW_TEMP = float(window)
+    if wall is not None:
+        WALL_TEMP = float(wall)
+    print(f"[Config] Updated boundary temps → Heater={HEATER_TEMP}°C, Window={WINDOW_TEMP}°C, Wall={WALL_TEMP}°C")
 
 # Interface temp
 INTERFACE_INIT_TEMP = 20.0  # initial temp
