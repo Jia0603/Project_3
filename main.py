@@ -8,11 +8,28 @@ from core.ext_mpi_solver import ext_dirichlet_neumann_iterate
 from core.visualizer import visualize_pipeline
 import argparse
 
+# def parse_arguments():
+#     parser = argparse.ArgumentParser(description='Apartment Temperature Simulation')
+#     parser.add_argument('--new-apartment', '-n',
+#                        action='store_true',
+#                        help='Run simulation for new apartment layout (default: old apartment)')
+#     return parser.parse_args()
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Apartment Temperature Simulation')
-    parser.add_argument('--new-apartment', '-n', 
-                       action='store_true',
-                       help='Run simulation for new apartment layout (default: old apartment)')
+
+    parser.add_argument('--new-apartment', '-n',
+                        action='store_true',
+                        help='Use the new apartment layout (default: old apartment)')
+    parser.add_argument('--heater-temp', type=float, default=40.0,
+                        help='Heater temperature (°C)')
+    parser.add_argument('--window-temp', type=float, default=5.0,
+                        help='Window temperature (°C)')
+    parser.add_argument('--wall-temp', type=float, default=15.0,
+                        help='Wall temperature (°C)')
+    parser.add_argument('--iters', type=int, default=10,
+                        help='Number of Dirichlet-Neumann iterations')
+
     return parser.parse_args()
 
 
@@ -121,8 +138,8 @@ if __name__ == "__main__":
     ########################################这里我也改了
     main(
         apt_new=args.new_apartment,
-        heater_temp=20.0,  # 改暖气
-        window_temp=5.0,  # 改窗温
-        wall_temp=15.0,  # 改墙温
-        num_iters=20  # 改迭代次数
+        heater_temp=args.heater_temp,
+        window_temp=args.window_temp,
+        wall_temp=args.wall_temp,
+        num_iters=args.iters
     )
