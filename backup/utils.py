@@ -1,0 +1,153 @@
+# common/utils.py
+import numpy as np
+
+# Global parameters
+
+# Room sizes
+ROOM1_SIZE = (1.0, 1.0)    
+ROOM2_SIZE = (1.0, 2.0)    
+ROOM3_SIZE = (1.0, 1.0)    
+ROOM4_SIZE = (0.5, 0.5)  # Room 4 size, for the extension task
+
+# Default delta_x
+DEFAULT_DX = 1/20          
+DEFAULT_DY = 1/20           
+
+# Boundary conditions
+HEATER_TEMP = 40.0
+#HEATER_TEMP = 50.0
+#HEATER_TEMP = 30.0
+
+WINDOW_TEMP = 5.0           
+WALL_TEMP = 15.0            
+
+# Interface temp
+INTERFACE_INIT_TEMP = 20.0  # initial temp
+
+def get_room_dimensions(new_apt=False):
+    
+    if new_apt == False:
+        return {
+            "room1": ROOM1_SIZE,
+            "room2": ROOM2_SIZE, 
+            "room3": ROOM3_SIZE
+        }
+    else:
+        return {
+            "room1": ROOM1_SIZE,
+            "room2": ROOM2_SIZE, 
+            "room3": ROOM3_SIZE,
+            "room4": ROOM4_SIZE
+        }
+
+def get_default_dx():
+    """返回默认网格间距"""
+    return DEFAULT_DX
+
+def get_default_dy():
+    """返回默认网格间距"""
+    return DEFAULT_DY
+
+def compute_grid_size(Lx, Ly, dx=None, dy=None):
+    
+    if dx is None:
+        dx = DEFAULT_DX
+    if dy is None:
+        dy = DEFAULT_DY
+    Nx = int(Lx / dx) + 1
+    Ny = int(Ly / dy) + 1
+    return Nx, Ny
+
+def get_room_grid_info(room_id, dx=None, dy=None, new_apt=False):
+    """
+    Args:
+        room_id : str  ('room1' / 'room2' / 'room3')
+        dx, dy  : float  (grid size)
+    
+    Return:
+        dict : {
+            'Lx': float, 'Ly': float,     # room size
+            'Nx': int, 'Ny': int,         # num of grids
+            'dx': float, 'dy': float,     
+            'x': ndarray, 'y': ndarray    # coordinates
+        }
+    """
+    if dx is None:
+        dx = DEFAULT_DX
+    if dy is None:
+        dy = DEFAULT_DY
+    if new_apt is True:
+        room_sizes = get_room_dimensions(new_apt=True) # for extension
+    else:
+        room_sizes = get_room_dimensions()
+    Lx, Ly = room_sizes[room_id]
+    Nx, Ny = compute_grid_size(Lx, Ly, dx, dy)
+    
+    x = np.linspace(0, Lx, Nx)
+    y = np.linspace(0, Ly, Ny)
+    
+    return {
+        'Lx': Lx, 'Ly': Ly,
+        'Nx': Nx, 'Ny': Ny,
+        'dx': dx, 'dy': dy,
+        'x': x, 'y': y
+    }
+
+def get_interface_grid_info(dx=None, dy=None):
+    """
+    返回:
+        dict : {
+            'Ny_interface': list,         
+            # 'y_interface': ndarray,     
+        }
+    """
+    if dx is None:
+        dx = DEFAULT_DX
+    if dy is None:
+        dy = DEFAULT_DY
+    
+    Ly_interface = ROOM1_SIZE[1]
+    Ly_interface_new = ROOM4_SIZE[1] # for extension
+    Ny_interface = int(Ly_interface / dy) + 1
+    Ny_interface_new = int(Ly_interface_new / dy) + 1 # for extension
+    # y_interface = np.linspace(0, Ly_interface, Ny_interface)
+    
+    return {
+        'Ny_interface': [Ny_interface, Ny_interface_new],
+    }
+
+# def generate_grid(Lx, Ly, dx):
+#     """生成笛卡尔网格坐标"""
+#     Nx, Ny = compute_grid_size(Lx, Ly, dx)
+#     x = np.linspace(0, Lx, Nx)
+#     y = np.linspace(0, Ly, Ny)
+#     X, Y = np.meshgrid(x, y, indexing='ij')
+#     return X, Y, Nx, Ny
+
+
+# def extract_left_boundary(u_2d):
+#     """
+#     从二维解矩阵中提取左边界的值
+#     """
+#     return u_2d[0, :].copy()
+
+
+# def extract_right_boundary(u_2d):
+#     """
+#     从二维解矩阵中提取右边界的值
+#     """
+#     return u_2d[-1, :].copy()
+
+
+# def extract_bottom_boundary(u_2d):
+#     """
+#     从二维解矩阵中提取下边界的值
+#     """
+#     return u_2d[:, 0].copy()
+
+
+# def extract_top_boundary(u_2d):
+#     """
+#     从二维解矩阵中提取上边界的值
+#     """
+#     return u_2d[:, -1].copy()
