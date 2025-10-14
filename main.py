@@ -7,13 +7,13 @@ from core.mpi_solver import dirichlet_neumann_iterate
 from core.ext_mpi_solver import ext_dirichlet_neumann_iterate
 from core.visualizer import visualize_pipeline
 import argparse
+import time
+from scipy.sparse.linalg import cg, gmres, spsolve
 
-# def parse_arguments():
-#     parser = argparse.ArgumentParser(description='Apartment Temperature Simulation')
-#     parser.add_argument('--new-apartment', '-n',
-#                        action='store_true',
-#                        help='Run simulation for new apartment layout (default: old apartment)')
-#     return parser.parse_args()
+# 初始化MPI环境（非MPI环境将直接报错）
+COMM = MPI.COMM_WORLD
+RANK = COMM.Get_rank()
+SIZE = COMM.Get_size()
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Apartment Temperature Simulation')
@@ -29,35 +29,72 @@ def parse_arguments():
                         help='Wall temperature (°C)')
     parser.add_argument('--iters', type=int, default=10,
                         help='Number of Dirichlet-Neumann iterations')
+    parser.add_argument('--dx', type=float, default=None,
+                        help='Grid spacing Δx (default: get_default_dx())')
+    parser.add_argument('--dy', type=float, default=None,
+                        help='Grid spacing Δy (default: get_default_dy())')
+    parser.add_argument('--solver', type=str, default='direct',
+                        choices=['direct', 'cg', 'gmres', 'spsolve'],
+                        help='Linear solver type')
+    parser.add_argument('--solver-tol', type=float, default=1e-6,
+                        help='Solver tolerance for iterative methods')
 
     return parser.parse_args()
 
 
-# 初始化MPI环境（非MPI环境将直接报错）
-COMM = MPI.COMM_WORLD
-RANK = COMM.Get_rank()
-SIZE = COMM.Get_size()
+def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
+         num_iters=10, dx=None, dy=None, solver='direct', solver_tol=1e-6):
+    """
+    主函数：运行温度场模拟
 
-def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0, num_iters=10):
-    #################################这里我加了一些参数，方便修改
-    from common import utils  # 确保导入在函数内
+    Args:
+        apt_new: 是否使用新公寓布局（4房间）
+        heater_temp: 暖气温度
+        window_temp: 窗户温度
+        wall_temp: 墙壁温度
+        num_iters: D-N迭代次数
+        dx, dy: 网格间距
+        solver: 求解器类型 ('direct', 'cg', 'gmres', 'spsolve')
+        solver_tol: 迭代求解器容差
+    """
+
+    from common import utils
     utils.set_boundary_conditions(heater=heater_temp, window=window_temp, wall=wall_temp)
 
-    # 固定参数（与MPI solver逻辑匹配）
-    dx = get_default_dx()
-    dy = get_default_dy()
+    # 设置网格参数
+    dx = get_default_dx() if dx is None else dx
+    dy = get_default_dy() if dy is None else dy
     omega = 0.8
-    num_iters = 10
+
+    # 将求解器配置传递给求解器模块
+    solver_config = {
+        'solver_type': solver,
+        'tol': solver_tol,
+        'maxiter': 10000
+    }
+
+    if RANK == 0:
+        print(f"\n{'='*60}")
+        print(f"Simulation Configuration:")
+        print(f"  - Apartment: {'New (4 rooms)' if apt_new else 'Old (3 rooms)'}")
+        print(f"  - Grid spacing: dx={dx}, dy={dy}")
+        print(f"  - D-N iterations: {num_iters}")
+        print(f"  - Solver: {solver} (tol={solver_tol})")
+        print(f"  - Temperatures: Heater={heater_temp}°C, Window={window_temp}°C, Wall={wall_temp}°C")
+        print(f"{'='*60}\n")
+
+    t_start = time.time()
 
     # 调用MPI并行求解（子进程返回None，主进程返回结果字典）
     if apt_new == False:
-        result = dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters)
+        result = dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters, solver_config=solver_config)
     else:
-        result = ext_dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters)
+        result = ext_dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters, solver_config=solver_config)
 
     # 子进程无结果，直接返回（不执行后续输出/保存）
     if RANK != 0:
         return
+
 
     # 提取主进程的求解结果
     u1 = result["u1"]
@@ -125,8 +162,6 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0, num_i
         np.save(os.path.join(out_dir, "u4.npy"), u4)
         np.save(os.path.join(out_dir, "gamma3.npy"), gamma3)
 
-
-
     # --- Visualization ---
     if RANK == 0:
         visualize_pipeline(result, dx, dy, apt_new)
@@ -141,5 +176,9 @@ if __name__ == "__main__":
         heater_temp=args.heater_temp,
         window_temp=args.window_temp,
         wall_temp=args.wall_temp,
-        num_iters=args.iters
+        num_iters=args.iters,
+        dx=args.dx,
+        dy=args.dy,
+        solver=args.solver,
+        solver_tol=args.solver_tol
     )

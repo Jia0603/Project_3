@@ -5,16 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="36929466-f7ea-4e5b-9536-2ca91899fa62" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/ext_output/room1.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room2.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room3.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room3.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ext_output/room4.png" beforeDir="false" afterPath="$PROJECT_DIR$/ext_output/room4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_for_task4.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_for_task4.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/ext_mpi_solver.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/ext_mpi_solver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/mpi_solver.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/mpi_solver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main_for_task4.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/output/gamma1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma1.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/gamma2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/gamma2.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/room1.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/room2.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/room3.png" beforeDir="false" afterPath="$PROJECT_DIR$/output/room3.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u1.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u1.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u2.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u2.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/u3.npy" beforeDir="false" afterPath="$PROJECT_DIR$/output/u3.npy" afterDir="false" />
@@ -83,6 +80,19 @@
       <option name="presentableId" value="Default" />
       <updated>1760021364128</updated>
     </task>
+    <task id="LOCAL-00001" summary="完成notebook">
+      <option name="closed" value="true" />
+      <created>1760389155659</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1760389155659</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="完成notebook" />
+    <option name="LAST_COMMIT_MESSAGE" value="完成notebook" />
   </component>
 </project>

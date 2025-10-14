@@ -4,10 +4,18 @@ from common.utils import get_room_grid_info
 from common.boundary_config import get_boundary_conditions
 from core.matrix_builder import build_laplace_matrix_mixed, build_b_mixed
 
-def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy):
+from scipy.sparse.linalg import cg, gmres, spsolve
+from scipy.sparse import csr_matrix
+
+def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config=None):
     """
     Solve Au = b.
     """
+
+    if solver_config is None:
+        solver_config = {'solver_type': 'direct', 'tol': 1e-6, 'maxiter': 10000}
+
+
     info = get_room_grid_info(room_id, dx, dy, new_apt=True)
     bc_types, bc_values = get_boundary_conditions(room_id, gamma1, gamma2, gamma3, dx, dy)
 
@@ -16,17 +24,41 @@ def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy):
 
     if A.shape[0] != len(b):
         raise ValueError(f"{room_id}: Unmatchable matrices! A: {A.shape}, b: {len(b)}")
-    
+
     cond = np.linalg.cond(A)
     if cond > 1e10:
         print(f"Warning: {room_id} large condition number: {cond:.2e}")
-    
-    u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
 
+        # 选择求解器
+    solver_type = solver_config.get('solver_type', 'direct')
+
+    if solver_type == 'cg':
+        A_sparse = csr_matrix(A)
+        u_flat, info = cg(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
+        if info > 0:
+            print(f"Warning: {room_id} CG did not converge after {info} iterations")
+
+    elif solver_type == 'gmres':
+        A_sparse = csr_matrix(A)
+        u_flat, info = gmres(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
+        if info > 0:
+            print(f"Warning: {room_id} GMRES did not converge")
+
+    elif solver_type == 'spsolve':
+        A_sparse = csr_matrix(A)
+        u_flat = spsolve(A_sparse, b)
+
+    else:  # 'direct'
+        if hasattr(A, 'toarray'):
+            u_flat = np.linalg.solve(A.toarray(), b)
+        else:
+            u_flat = np.linalg.solve(A, b)
+
+    u = u_flat.reshape(ny_solve, nx_solve)
     return u
 
 
-def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
+def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=None):
     """
     Dirichlet-Neumann iteration using MPI.
     Steps: “Ω2 -> (Ω1, Ω3, Ω4) -> relaxation” 
@@ -115,7 +147,7 @@ def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
             gamma3 = comm.bcast(None, root=0)
 
             # solve Ax=b for {room_id}
-            u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy)
+            u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config)
 
             # send to main process
             comm.send(u, dest=0, tag=TAG_G1_SEND)
@@ -126,7 +158,7 @@ def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
         gamma1 = comm.bcast(None, root=0)
         gamma2 = comm.bcast(None, root=0)
         gamma3 = comm.bcast(None, root=0)
-        final_u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy)
+        final_u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config)
         comm.send(final_u, dest=0, tag=TAG_G2_SEND)
         
         return None

@@ -3,13 +3,17 @@ from mpi4py import MPI  # 直接导入MPI，不再兼容无MPI环境
 from common.utils import get_room_grid_info
 from common.boundary_config import get_boundary_conditions
 from core.matrix_builder import build_laplace_matrix_mixed, build_b_mixed
+from scipy.sparse.linalg import cg, gmres, spsolve
+from scipy.sparse import csr_matrix
 
-
-def _solve_room(room_id, gamma1, gamma2, dx, dy):
+def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
     """
     组装房间 `room_id` 的离散方程并直接求解（子进程内部调用）。
     返回二维温度场 u_2d。
     """
+    if solver_config is None:
+        solver_config = {'solver_type': 'direct', 'tol': 1e-6, 'maxiter': 10000}
+
     info = get_room_grid_info(room_id, dx, dy)
     bc_types, bc_values = get_boundary_conditions(room_id, gamma1, gamma2, None,  dx, dy)
 
@@ -24,12 +28,41 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy):
     cond = np.linalg.cond(A)
     if cond > 1e10:
         print(f"警告：{room_id} 矩阵条件数很大: {cond:.2e}")
-    
-    u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
+
+    # u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
+    # return u
+
+        # 选择求解器
+    solver_type = solver_config.get('solver_type', 'direct')
+
+    if solver_type == 'cg':
+        # 共轭梯度法（适用于对称正定矩阵）
+        A_sparse = csr_matrix(A)
+        u_flat, info = cg(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
+        if info > 0:
+            print(f"Warning: {room_id} CG did not converge after {info} iterations")
+        elif info < 0:
+            print(f"Error: {room_id} CG illegal input or breakdown")
+    elif solver_type == 'gmres':
+        # GMRES（适用于一般矩阵）
+        A_sparse = csr_matrix(A)
+        u_flat, info = gmres(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
+        if info > 0:
+            print(f"Warning: {room_id} GMRES did not converge")
+    elif solver_type == 'spsolve':
+        # 稀疏直接求解
+        A_sparse = csr_matrix(A)
+        u_flat = spsolve(A_sparse, b)
+
+    else:  # 'direct' or default
+        # 密集矩阵直接求解
+        u_flat = np.linalg.solve(A, b)
+
+    u = u_flat.reshape(ny_solve, nx_solve)
     return u
 
 
-def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
+def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=None):
     """
     Dirichlet–Neumann 迭代（仅MPI并行模式）：
     按 “Ω2 -> (Ω1, Ω3) -> 松弛更新” 顺序同步三个子域的接口数据。
@@ -112,8 +145,7 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
             gamma2 = comm.bcast(None, root=0)
 
             # 求解当前子域的温度场
-            u = _solve_room(room_id, gamma1, gamma2, dx, dy)
-
+            u = _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config)
             # 发送解给主进程（用于接口更新）
             comm.send(u, dest=0, tag=TAG_G1_SEND)
 
@@ -124,7 +156,7 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10):
         # 最终阶段：接收最终接口温度，求解并发送最终解
         gamma1 = comm.bcast(None, root=0)
         gamma2 = comm.bcast(None, root=0)
-        final_u = _solve_room(room_id, gamma1, gamma2, dx, dy)
+        final_u = _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config)
         comm.send(final_u, dest=0, tag=TAG_G2_SEND)
         
         return None
