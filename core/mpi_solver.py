@@ -25,9 +25,9 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
         raise ValueError(f"{room_id}: 矩阵维度不匹配! A: {A.shape}, b: {len(b)}")
     
     # 检查矩阵条件数
-    cond = np.linalg.cond(A)
+    """cond = np.linalg.cond(A)
     if cond > 1e10:
-        print(f"警告：{room_id} 矩阵条件数很大: {cond:.2e}")
+        print(f"警告：{room_id} 矩阵条件数很大: {cond:.2e}")"""
 
     # u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
     # return u
@@ -43,20 +43,19 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
             print(f"Warning: {room_id} CG did not converge after {info} iterations")
         elif info < 0:
             print(f"Error: {room_id} CG illegal input or breakdown")
-    elif solver_type == 'gmres':
-        # GMRES（适用于一般矩阵）
-        A_sparse = csr_matrix(A)
-        u_flat, info = gmres(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
-        if info > 0:
-            print(f"Warning: {room_id} GMRES did not converge")
+
     elif solver_type == 'spsolve':
         # 稀疏直接求解
         A_sparse = csr_matrix(A)
         u_flat = spsolve(A_sparse, b)
 
     else:  # 'direct' or default
-        # 密集矩阵直接求解
-        u_flat = np.linalg.solve(A, b)
+        if hasattr(A, 'toarray'):
+            # A 是稀疏矩阵，转换为密集矩阵后求解
+            u_flat = np.linalg.solve(A.toarray(), b)
+        else:
+            # A 已经是密集矩阵
+            u_flat = np.linalg.solve(A, b)
 
     u = u_flat.reshape(ny_solve, nx_solve)
     return u

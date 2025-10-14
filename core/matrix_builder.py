@@ -1,12 +1,15 @@
 # core/matrix_builder.py
 import numpy as np
+from scipy.sparse import lil_matrix
+
 
 def build_laplace_matrix_mixed(nx, ny, h, bc_types):
     
     nx_solve = nx - 2
     ny_solve = ny - 2
     N = nx_solve * ny_solve
-    A = np.zeros((N, N))
+    # 稀疏矩阵
+    A = lil_matrix((N, N), dtype=float)
     
     for j in range(ny_solve):
         for i in range(nx_solve):
@@ -51,8 +54,9 @@ def build_laplace_matrix_mixed(nx, ny, h, bc_types):
             # 下邻居 (i, j-1)
             if j > 0:
                 A[p, p-nx_solve] = 1.0 / h**2
-    
-    return A, nx_solve, ny_solve
+
+    # 转换为 CSR 格式（适合求解运算）
+    return A.tocsr(), nx_solve, ny_solve
 
 
 def build_b_mixed(nx, ny, h, bc_types, bc_values):

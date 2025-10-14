@@ -25,9 +25,9 @@ def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config=None):
     if A.shape[0] != len(b):
         raise ValueError(f"{room_id}: Unmatchable matrices! A: {A.shape}, b: {len(b)}")
 
-    cond = np.linalg.cond(A)
+    """cond = np.linalg.cond(A)
     if cond > 1e10:
-        print(f"Warning: {room_id} large condition number: {cond:.2e}")
+        print(f"Warning: {room_id} large condition number: {cond:.2e}")"""
 
         # 选择求解器
     solver_type = solver_config.get('solver_type', 'direct')
@@ -37,12 +37,6 @@ def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config=None):
         u_flat, info = cg(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
         if info > 0:
             print(f"Warning: {room_id} CG did not converge after {info} iterations")
-
-    elif solver_type == 'gmres':
-        A_sparse = csr_matrix(A)
-        u_flat, info = gmres(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
-        if info > 0:
-            print(f"Warning: {room_id} GMRES did not converge")
 
     elif solver_type == 'spsolve':
         A_sparse = csr_matrix(A)
