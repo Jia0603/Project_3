@@ -1,15 +1,16 @@
 ## Project Structure
-project_3_temp_simulation/
-├── core/
-│   ├── matrix_builder.py   # Coefficient matrix
-│   ├── mpi_solver.py       # MPI parallel Dirichlet–Neumann iteration
-│   ├── visualizer.py       # Visualization and heating adequacy check
-│   ├── params_tester.py    # Parameter sensitivity tests
-│   └── ext_mpi_solver.py   # MPI solver for 4 subdomains (extension)
-├── common/
-│   ├── boundary_config.py  # Boundary condition configuration (extension-ready)
-│   └── utils.py            # Grid utilities and helpers (extension-ready)
-└── main.py                 # Entrypoint (extension-ready)
+
+    project_3_temp_simulation/
+    ├── core/
+    │   ├── matrix_builder.py   # Coefficient matrix
+    │   ├── mpi_solver.py       # MPI parallel Dirichlet–Neumann iteration
+    │   ├── visualizer.py       # Visualization and heating adequacy check
+    │   ├── params_tester.py    # Parameter sensitivity tests
+    │   └── ext_mpi_solver.py   # MPI solver for 4 subdomains (extension)
+    ├── common/
+    │   ├── boundary_config.py  # Boundary condition configuration (extension-ready)
+    │   └── utils.py            # Grid utilities and helpers (extension-ready)
+    └── main.py                 # Entrypoint (extension-ready)
 
 ## Run :
     mpiexec -n 4 python main.py
