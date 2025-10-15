@@ -25,7 +25,7 @@ Outputs:
 4) Visualization is implemented in visualizer.py (handles 3/4 rooms and corner fill)
 5) Results are saved under output/ (and ext_output/ for the extension)
 
-CLI examples:
+CLI examples for varying parameters (heater temperature):
 
     mpiexec -n 4 python main.py --heater-temp 20
     
