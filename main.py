@@ -10,7 +10,7 @@ import argparse
 import time
 from scipy.sparse.linalg import cg, gmres, spsolve
 
-# 初始化MPI环境（非MPI环境将直接报错）
+# Initialize MPI environment
 COMM = MPI.COMM_WORLD
 RANK = COMM.Get_rank()
 SIZE = COMM.Get_size()
@@ -45,28 +45,28 @@ def parse_arguments():
 def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
          num_iters=10, dx=None, dy=None, solver='direct', solver_tol=1e-6):
     """
-    主函数：运行温度场模拟
+    Main entry: run apartment temperature simulation
 
     Args:
-        apt_new: 是否使用新公寓布局（4房间）
-        heater_temp: 暖气温度
-        window_temp: 窗户温度
-        wall_temp: 墙壁温度
-        num_iters: D-N迭代次数
-        dx, dy: 网格间距
-        solver: 求解器类型 ('direct', 'cg', 'gmres', 'spsolve')
-        solver_tol: 迭代求解器容差
+        apt_new: whether to use the new apartment layout (4 rooms)
+        heater_temp: heater temperature (°C)
+        window_temp: window temperature (°C)
+        wall_temp: wall temperature (°C)
+        num_iters: number of Dirichlet–Neumann iterations
+        dx, dy: grid spacing
+        solver: linear solver type ('direct', 'cg', 'gmres', 'spsolve')
+        solver_tol: tolerance for iterative solvers
     """
 
     from common import utils
     utils.set_boundary_conditions(heater=heater_temp, window=window_temp, wall=wall_temp)
 
-    # 设置网格参数
+    # Set grid spacing
     dx = get_default_dx() if dx is None else dx
     dy = get_default_dy() if dy is None else dy
     omega = 0.8
 
-    # 将求解器配置传递给求解器模块
+    # Solver configuration
     solver_config = {
         'solver_type': solver,
         'tol': solver_tol,
@@ -85,18 +85,18 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
 
     t_start = time.time()
 
-    # 调用MPI并行求解（子进程返回None，主进程返回结果字典）
+    # Call MPI solver (workers return None, root returns results dict)
     if apt_new == False:
         result = dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters, solver_config=solver_config)
     else:
         result = ext_dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters, solver_config=solver_config)
 
-    # 子进程无结果，直接返回（不执行后续输出/保存）
+    # Workers return here (no output/visualization)
     if RANK != 0:
         return
 
 
-    # 提取主进程的求解结果
+    # Extract root results
     u1 = result["u1"]
     u2 = result["u2"]
     u3 = result["u3"]
@@ -108,7 +108,7 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
         gamma3 = result["gamma3"]
 
     '''
-    # 输出尺寸信息（仅主进程显示）
+    # Optional: print shapes (root only)
     print("u1 shape:", u1.shape)
     print("u2 shape:", u2.shape)
     print("u3 shape:", u3.shape)
@@ -145,7 +145,7 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
             
     print("="*50 + "\n")
 
-    # 创建输出目录并保存结果数组
+    # Create output directory and save arrays
     if apt_new == False:
         out_dir = os.path.join(os.path.dirname(__file__), "output")
     else:
@@ -170,7 +170,7 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
 if __name__ == "__main__":
     args = parse_arguments()
     #main(apt_new=args.new_apartment)
-    ########################################这里我也改了
+    # Customized CLI wiring
     main(
         apt_new=args.new_apartment,
         heater_temp=args.heater_temp,

@@ -1,5 +1,5 @@
 import numpy as np
-from mpi4py import MPI  # 直接导入MPI，不再兼容无MPI环境
+from mpi4py import MPI
 from common.utils import get_room_grid_info
 from common.boundary_config import get_boundary_conditions
 from core.matrix_builder import build_laplace_matrix_mixed, build_b_mixed
@@ -8,8 +8,8 @@ from scipy.sparse import csr_matrix
 
 def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
     """
-    组装房间 `room_id` 的离散方程并直接求解（子进程内部调用）。
-    返回二维温度场 u_2d。
+    Assemble and solve the discrete system for a given `room_id`.
+    Returns the 2D temperature field u_2d.
     """
     if solver_config is None:
         solver_config = {'solver_type': 'direct', 'tol': 1e-6, 'maxiter': 10000}
@@ -20,23 +20,23 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
     A, nx_solve, ny_solve = build_laplace_matrix_mixed(info["Nx"], info["Ny"], dx, bc_types)
     b = build_b_mixed(info["Nx"], info["Ny"], dx, bc_types, bc_values)
 
-    # 检查矩阵维度
+    # Validate matrix dimensions
     if A.shape[0] != len(b):
-        raise ValueError(f"{room_id}: 矩阵维度不匹配! A: {A.shape}, b: {len(b)}")
+        raise ValueError(f"{room_id}: Dimension mismatch! A: {A.shape}, b: {len(b)}")
     
-    # 检查矩阵条件数
+    # Optional: condition number diagnostics
     """cond = np.linalg.cond(A)
     if cond > 1e10:
-        print(f"警告：{room_id} 矩阵条件数很大: {cond:.2e}")"""
+        print(f"Warning: {room_id} matrix is ill-conditioned: {cond:.2e}")"""
 
     # u = np.linalg.solve(A, b).reshape(ny_solve, nx_solve)
     # return u
 
-        # 选择求解器
+    # Select solver
     solver_type = solver_config.get('solver_type', 'direct')
 
     if solver_type == 'cg':
-        # 共轭梯度法（适用于对称正定矩阵）
+        # Conjugate Gradient (for SPD matrices)
         A_sparse = csr_matrix(A)
         u_flat, info = cg(A_sparse, b, rtol=solver_config['tol'], maxiter=solver_config['maxiter'])
         if info > 0:
@@ -45,16 +45,16 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
             print(f"Error: {room_id} CG illegal input or breakdown")
 
     elif solver_type == 'spsolve':
-        # 稀疏直接求解
+        # Sparse direct solve
         A_sparse = csr_matrix(A)
         u_flat = spsolve(A_sparse, b)
 
     else:  # 'direct' or default
         if hasattr(A, 'toarray'):
-            # A 是稀疏矩阵，转换为密集矩阵后求解
+            # Convert sparse to dense then solve
             u_flat = np.linalg.solve(A.toarray(), b)
         else:
-            # A 已经是密集矩阵
+            # Dense matrix
             u_flat = np.linalg.solve(A, b)
 
     u = u_flat.reshape(ny_solve, nx_solve)
@@ -63,53 +63,54 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
 
 def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=None):
     """
-    Dirichlet–Neumann 迭代（仅MPI并行模式）：
-    按 “Ω2 -> (Ω1, Ω3) -> 松弛更新” 顺序同步三个子域的接口数据。
-    进程布局固定为4个进程：rank0（主进程）、rank1（Ω1）、rank2（Ω2）、rank3（Ω3）。
+    Dirichlet–Neumann iteration (MPI-only):
+    Synchronizes interface data across three subdomains in the order
+    "Ω2 -> (Ω1, Ω3) -> relaxation update".
+    The process layout requires 4 ranks: rank0 (root), rank1 (Ω1), rank2 (Ω2), rank3 (Ω3).
 
-    返回：
-        dict: 仅主进程返回 {"u1": ndarray, "u2": ndarray, "u3": ndarray, "gamma1": ndarray, "gamma2": ndarray}
-        子进程返回None
+    Returns:
+        dict: Only the root returns {"u1", "u2", "u3", "gamma1", "gamma2"}
+        Non-root ranks return None
     """
-    # 初始化MPI环境（强制并行，无MPI环境将报错）
+    # Initialize MPI environment
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    # 校验进程数（必须为4，否则终止）
+    # Validate number of processes (must be 4)
     if size != 4:
         if rank == 0:
-            raise ValueError("并行计算需启动4个进程！请使用 'mpiexec -n 4 python 脚本名.py' 运行")
-        comm.Abort()  # 非主进程直接终止
+            raise ValueError("This simulation requires 4 MPI ranks. Run with 'mpiexec -n 4 python main.py'")
+        comm.Abort()
 
-    # 初始化接口变量（长度取决于room1的y方向网格数）
+    # Initialize interface arrays (length follows room1 Ny)
     room1_info = get_room_grid_info("room1", dx, dy)
     Ny_interface = room1_info["Ny"]
     gamma1 = np.full(Ny_interface, 20.0, dtype=float)
     gamma2 = np.full(Ny_interface, 20.0, dtype=float)
 
-    # 定义MPI通信标签
-    TAG_G1_SEND = 10  # 迭代阶段：子进程向主进程发送解（用于接口更新）
-    TAG_G2_SEND = 11  # 最终阶段：子进程向主进程发送最终解
-    TAG_DONE = 99     # 主进程通知子进程迭代结束
+    # MPI tags
+    TAG_G1_SEND = 10  # Iteration: send partial solutions to root for interface update
+    TAG_G2_SEND = 11  # Final: send final solutions to root
+    TAG_DONE = 99     # Root signals all workers that iterations are done
 
-    # 主进程逻辑（rank0）：调度迭代、更新接口、收集结果
+    # Root logic (rank 0): orchestrate iterations, update interfaces, gather results
     if rank == 0:
         u1 = u2 = u3 = None
-        # 迭代更新接口与子域解
+        # Iterate interface updates and subdomain solves
         for _ in range(num_iters):
-            # 广播当前接口温度到所有子进程
+            # Broadcast current interface temperatures
             comm.bcast(gamma1, root=0)
             comm.bcast(gamma2, root=0)
 
-            # 接收子进程发送的解（用于更新接口）
+            # Receive solutions from workers
             u1 = comm.recv(source=1, tag=TAG_G1_SEND)
-            _ = comm.recv(source=2, tag=TAG_G1_SEND)  # Ω2解暂不参与接口更新
+            _ = comm.recv(source=2, tag=TAG_G1_SEND)  # Room2 solution not used in interface update
             u3 = comm.recv(source=3, tag=TAG_G1_SEND)
 
-            # 松弛更新接口温度（仅更新内部点，避免边界效应）
-            u1_right = u1[-1, :]  # Ω1右边界（与Ω2左接口重合）
-            u3_left = u3[0, :]    # Ω3左边界（与Ω2右接口重合）
+            # Relaxation update on interfaces (interior points only)
+            u1_right = u1[-1, :]  # Room1 right boundary (matches Room2 left interface)
+            u3_left = u3[0, :]    # Room3 left boundary (matches Room2 right interface)
             
             gamma1_new = gamma1.copy()
             gamma2_new = gamma2.copy()
@@ -118,11 +119,11 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=Non
             
             gamma1, gamma2 = gamma1_new, gamma2_new
 
-        # 通知所有子进程迭代结束
+        # Notify workers that iterations are complete
         for dst_rank in (1, 2, 3):
             comm.send(True, dest=dst_rank, tag=TAG_DONE)
 
-        # 广播最终接口温度，收集子进程的最终解
+        # Broadcast final interfaces and gather final solutions
         comm.bcast(gamma1, root=0)
         comm.bcast(gamma2, root=0)
         u1 = comm.recv(source=1, tag=TAG_G2_SEND)
@@ -131,28 +132,28 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=Non
 
         return {"u1": u1, "u2": u2, "u3": u3, "gamma1": gamma1, "gamma2": gamma2}
 
-    # 子进程逻辑（rank1:Ω1、rank2:Ω2、rank3:Ω3）：求解子域、响应主进程指令
+    # Worker logic (rank1: room1, rank2: room2, rank3: room3)
     if rank in (1, 2, 3):
-        # 映射rank到房间ID
+        # Map rank to room id
         room_id_map = {1: "room1", 2: "room2", 3: "room3"}
         room_id = room_id_map[rank]
 
-        # 迭代阶段：接收接口温度、求解子域、发送解给主进程
+        # Iteration phase: receive interfaces, solve subdomain, send to root
         for _ in range(num_iters):
-            # 接收主进程广播的接口温度
+            # Receive interface temperatures
             gamma1 = comm.bcast(None, root=0)
             gamma2 = comm.bcast(None, root=0)
 
-            # 求解当前子域的温度场
+            # Solve current subdomain
             u = _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config)
-            # 发送解给主进程（用于接口更新）
+            # Send solution back to root
             comm.send(u, dest=0, tag=TAG_G1_SEND)
 
-            # 检查是否收到结束指令
+            # Check for termination signal (polled after loop)
         
         _ = comm.recv(source=0, tag=TAG_DONE)
 
-        # 最终阶段：接收最终接口温度，求解并发送最终解
+        # Final phase: receive final interfaces, solve, and send final solution
         gamma1 = comm.bcast(None, root=0)
         gamma2 = comm.bcast(None, root=0)
         final_u = _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config)

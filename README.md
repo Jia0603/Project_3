@@ -1,63 +1,41 @@
+## Project Structure
 project_3_temp_simulation/
-├── core/                  
-│   ├── matrix_builder.py  # 系数矩阵构造（A）已完成
-│   ├── mpi_solver.py      # MPI并行迭代求解（B）已完成
-│   ├── visualizer.py      # 温度可视化与供暖判断（C）
-│   └── params_tester.py   # 参数敏感性测试（C）
-│   └── ext_mpi_solver.py  # 适配4子域的MPI求解（D）已完成
-├── common/                
-│   ├── boundary_config.py # 边界条件配置（A）已修改适用extension
-│   └── utils.py           # 网格计算、数据格式转换工具(A) 已修改适用extension
-└── main.py                # 主程序（B）已修改适用extension
+├── core/
+│   ├── matrix_builder.py   # Coefficient matrix
+│   ├── mpi_solver.py       # MPI parallel Dirichlet–Neumann iteration
+│   ├── visualizer.py       # Visualization and heating adequacy check
+│   ├── params_tester.py    # Parameter sensitivity tests
+│   └── ext_mpi_solver.py   # MPI solver for 4 subdomains (extension)
+├── common/
+│   ├── boundary_config.py  # Boundary condition configuration (extension-ready)
+│   └── utils.py            # Grid utilities and helpers (extension-ready)
+└── main.py                 # Entrypoint (extension-ready)
 
-初始化：
-
-from common.utils import *
-from common.boundary_config import *
-from core.matrix_builder import *
-
-dx = dy = 1/20
-omega = 0.8
-
-gamma1, gamma2, interface_info = initialize_interface_variables(dx, dy)
-
-info1 = get_room_grid_info("room1", dx, dy)
-info2 = get_room_grid_info("room2", dx, dy)
-info3 = get_room_grid_info("room3", dx, dy)
-
-获取边界信息
-
-get_boundary_conditions("room2", gamma1, gamma2)
-
-拉普拉斯方程A,b
-
-A2, nx_solve2, ny_solve2 = build_laplace_matrix_mixed(info2["Nx"], info2["Ny"], dx, bc2[0])
-
-b2 = build_b_mixed(info2["Nx"], info2["Ny"], dx, bc2[0], bc2[1])
-
-u2 = np.linalg.solve(A2, b2).reshape(nx_solve2, ny_solve2)
-
-
-Dirichlet条件下，A2尺寸是Nx-2, Ny-2不包含边界
-
-Neumann边界会被包含用来求解
-
-
-**************** mpi_solver.py / main.py ****************
-
-运行： 
+## Run :
     mpiexec -n 4 python main.py
-    mpiexec -n 5 python main.py -n for the extention task
+    mpiexec -n 5 python main.py -n   # for the 4-room extension
 
-结果： 
-1. 3个房间的温度场，分别保存在u1.npy, u2.npy, u3.npy中；
-2. gamma1.npy / gamma2.npy两个子域接口的温度场；
-3. 判断是否达到供暖效果，仅看平均温度是否>18℃;
-4. 作图这一部分在main.py中已注释，srz可以根据注释的作图代码调整 or 自己再重新写个;
-5. 以上结果都保存在output文件夹中。extension的结果报存在ext_output文件夹中
-6. srz: 我参考main.py已有的可视化新建了一份visualizer.py，包含4个房间绘制，4角空白问题修复，判断供暖效果。此外我修改了main里的温度符号因为gbk编码不了
-然后因为墙温度的设定实在太底层了在utils.py里面很难在外层更改，我就在utils里面设置了一个全局变量，然后给main()增加了参数来实现修改参数的目的。
-现在的版本命令行运行：
-mpiexec -n 4 python main.py --heater-temp 20
-就可以尝试20度暖气。其它参数同理
-默认参数保持和题目一样的
+Note: You can run MPI processes in project_3.ipynb instead of using command above.
+
+Outputs:
+1) Temperature fields for rooms saved to u1.npy, u2.npy, u3.npy (and u4.npy for extension)
+2) Interface arrays gamma1.npy / gamma2.npy (and gamma3.npy for extension)
+3) Heating adequacy check based on the overall average temperature (> 18°C)
+4) Visualization is implemented in visualizer.py (handles 3/4 rooms and corner fill)
+5) Results are saved under output/ (and ext_output/ for the extension)
+
+CLI examples:
+    mpiexec -n 4 python main.py --heater-temp 20
+Other parameters can be provided similarly; defaults match the assignment specification.
+
+
+## Group contributions:
+Zhe Zhang: implemented mpi_solver.py for parallel Dirichlet–Neumann iteration with MPI and main.py as the entrypoint for orchestrating the thermal simulation and result analysis.
+
+Jiazhuang Chen: 
+
+Ruizhen Shen: 
+
+Jiuen Feng: 
+
+Jia Gu: 
