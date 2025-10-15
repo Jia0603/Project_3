@@ -37,7 +37,7 @@ Zhe Zhang: implemented mpi_solver.py for parallel Dirichlet–Neumann iteration 
 
 Jiazhuang Chen: Writing the notebook and code of Extension Task 2 section
 
-Ruizhen Shen: 
+Ruizhen Shen: implemented the visualization for rooms, the heating evaluation and tested different parameters.
 
 Jiuen Feng: 
 
