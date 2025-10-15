@@ -29,7 +29,6 @@ def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config=None):
     if cond > 1e10:
         print(f"Warning: {room_id} large condition number: {cond:.2e}")"""
 
-        # 选择求解器
     solver_type = solver_config.get('solver_type', 'direct')
 
     if solver_type == 'cg':

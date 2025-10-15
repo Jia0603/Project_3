@@ -16,29 +16,29 @@ def parse_arguments():
     return parser.parse_args()
 
 
-# 初始化MPI环境（非MPI环境将直接报错）
+# Initialize MPI environment (will raise error if non-MPI environment)
 COMM = MPI.COMM_WORLD
 RANK = COMM.Get_rank()
 SIZE = COMM.Get_size()
 
 def main(apt_new=False):
-    # 固定参数（与MPI solver逻辑匹配）
+    # Fixed parameters (matching MPI solver logic)
     dx = get_default_dx()
     dy = get_default_dy()
     omega = 0.8
     num_iters = 10
 
-    # 调用MPI并行求解（子进程返回None，主进程返回结果字典）
+    # Call MPI parallel solver (subprocess returns None, main process returns result dict)
     if apt_new == False:
         result = dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters)
     else:
         result = ext_dirichlet_neumann_iterate(dx, dy, omega=omega, num_iters=num_iters)
 
-    # 子进程无结果，直接返回（不执行后续输出/保存）
+    # Subprocess has no result, return directly (skip output/save)
     if RANK != 0:
         return
 
-    # 提取主进程的求解结果
+    # Extract main process solution results
     u1 = result["u1"]
     u2 = result["u2"]
     u3 = result["u3"]
@@ -50,7 +50,7 @@ def main(apt_new=False):
         gamma3 = result["gamma3"]
 
     '''
-    # 输出尺寸信息（仅主进程显示）
+    # Output dimension information (main process only)
     print("u1 shape:", u1.shape)
     print("u2 shape:", u2.shape)
     print("u3 shape:", u3.shape)
@@ -81,13 +81,13 @@ def main(apt_new=False):
     print("-"*50)
 
     if avg_temp > 18.0:
-        print("Averged tempture > 18˚C. The heating in the flat is adequate.")
+        print("Averaged tempture > 18˚C. The heating in the flat is adequate.")
     else:
-        print("Averged tempture < 18˚C. The flat is not warm enough.")
+        print("Averaged tempture < 18˚C. The flat is not warm enough.")
             
     print("="*50 + "\n")
 
-    # 创建输出目录并保存结果数组
+    # Create output directory and save result arrays
     if apt_new == False:
         out_dir = os.path.join(os.path.dirname(__file__), "output")
     else:
@@ -105,30 +105,30 @@ def main(apt_new=False):
         np.save(os.path.join(out_dir, "gamma3.npy"), gamma3)
     
     
-    # 主进程可视化（若有matplotlib）
+    # Main process visualization (if matplotlib available)
     def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr, gamma3_arr=None):
-        """重构包含边界的完整温度场（用于可视化）"""
+        """Reconstruct full temperature field with boundary (for visualization)"""
         new_apt=False if gamma3_arr is None else True
         info = get_room_grid_info(room_id, dx, dy, new_apt)
         Nx, Ny = info["Nx"], info["Ny"]
         bc_types, bc_values = get_boundary_conditions(room_id, gamma1_arr, gamma2_arr, gamma3_arr, dx, dy)
 
-        # 确定求解域索引（与matrix_builder逻辑一致）
+        # Determine solution domain indices (consistent with matrix_builder logic)
         i_start = 1 
         i_end = Nx - 1 
         j_start = 1 
         j_end = Ny - 1 
 
-        # 初始化完整温度场并填充内部求解结果
+        # Initialize full temperature field and fill interior solution results
         u_full = np.full((Nx, Ny), np.nan, dtype=float)
-        # u_interior 现在是 (ny_solve, nx_solve)，需要转置为 (nx_solve, ny_solve)
+        # u_interior is now (ny_solve, nx_solve), transpose to (nx_solve, ny_solve)
         u_full[i_start:i_end, j_start:j_end] = u_interior.T
 
-        # 辅助函数：获取边界值（兼容标量/数组）
+        # Helper function: get boundary value (compatible with scalar/array)
         def get_val(v, idx):
             return v if np.isscalar(v) else v[idx]
 
-        # 填充Dirichlet边界
+        # Fill Dirichlet boundaries
         if bc_types.get("left") == "Dirichlet":
             for jg in range(j_start, j_end):
                 u_full[0, jg] = get_val(bc_values["left"], jg)
@@ -142,7 +142,7 @@ def main(apt_new=False):
             for ig in range(i_start, i_end):
                 u_full[ig, Ny-1] = get_val(bc_values["top"], ig)
 
-        # Neumann边界：复制相邻内部点（仅用于可视化颜色连续性）
+        # Neumann boundaries: copy adjacent interior points (for visualization color continuity only)
         if bc_types.get("left") == "Neumann":
             u_full[0, j_start:j_end] = u_full[1, j_start:j_end]
         if bc_types.get("right") == "Neumann":
@@ -154,15 +154,15 @@ def main(apt_new=False):
 
         return u_full
 
-    # 重构各房间完整温度场并保存图像
+    # Reconstruct complete temperature field for each room and save images
     u1_full = reconstruct_full(u1, "room1", gamma1, gamma2, gamma3)
     u2_full = reconstruct_full(u2, "room2", gamma1, gamma2, gamma3)
     u3_full = reconstruct_full(u3, "room3", gamma1, gamma2, gamma3)
 
-    # 统一色轴范围（匹配文档中边界温度：5℃-40℃）
+    # Unified colorbar range (matching document boundary temperatures: 5℃-40℃)
     vmin, vmax = 5.0, 40.0
 
-    # 保存Room1图像
+    # Save Room1 image
     plt.imshow(u1_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
     plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room1 Temperature (with boundaries)")
@@ -170,8 +170,8 @@ def main(apt_new=False):
     plt.savefig(room1_path, dpi=200); plt.close()
     print(f"Saved figure: {room1_path}")
 
-    # 保存Room2图像
-    plt.figure(figsize=(4, 8))  # 长方形：长宽比 2:1
+    # Save Room2 image
+    plt.figure(figsize=(4, 8))  # Long rectangle: aspect ratio 2:1
     plt.imshow(u2_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
     plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room2 Temperature (with boundaries)")
@@ -179,7 +179,7 @@ def main(apt_new=False):
     plt.savefig(room2_path, dpi=200); plt.close()
     print(f"Saved figure: {room2_path}")
 
-    # 保存Room3图像
+    # Save Room3 image
     plt.imshow(u3_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
     plt.xlabel('x [m]'); plt.ylabel('y [m]')
     plt.colorbar(); plt.title("Room3 Temperature (with boundaries)")
@@ -187,7 +187,7 @@ def main(apt_new=False):
     plt.savefig(room3_path, dpi=200); plt.close()
     print(f"Saved figure: {room3_path}")
 
-    # 保存Room4图像
+    # Save Room4 image
     if apt_new == True:
         u4_full = reconstruct_full(u4, "room4", gamma1, gamma2, gamma3)
         plt.imshow(u4_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)

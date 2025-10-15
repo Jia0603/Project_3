@@ -35,7 +35,7 @@ Other parameters can be provided similarly; defaults match the assignment specif
 ## Group contributions
 Zhe Zhang: implemented mpi_solver.py for parallel Dirichlet–Neumann iteration with MPI and main.py as the entrypoint for orchestrating the thermal simulation and result analysis.
 
-Jiazhuang Chen: 
+Jiazhuang Chen: Writing the notebook and code of Extension Task 2 section
 
 Ruizhen Shen: 
 
