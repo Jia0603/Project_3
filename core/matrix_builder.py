@@ -8,54 +8,53 @@ def build_laplace_matrix_mixed(nx, ny, h, bc_types):
     nx_solve = nx - 2
     ny_solve = ny - 2
     N = nx_solve * ny_solve
-    # 稀疏矩阵
+    # Sparse matrix
     A = lil_matrix((N, N), dtype=float)
     
     for j in range(ny_solve):
         for i in range(nx_solve):
             p = i + j * nx_solve
             
-            # 标准五点模板的中心系数
+            # Standard five-point stencil central coefficient
             central_coeff = -4.0 / h**2
             
-            # 检查是否在边界上，若是 Neumann 边界则修改系数
-            # Ghost point 方法：u_ghost = u_interior，使该方向导数项消失
+            # if Neumann boundary, modify coefficient
             
-            # 左边界 (i = 0)
+            # left
             if i == 0 and bc_types.get("left") == "Neumann":
                 central_coeff += 1.0 / h**2  
             
-            # 右边界 (i = nx_solve - 1)
+            # right
             if i == nx_solve - 1 and bc_types.get("right") == "Neumann":
                 central_coeff += 1.0 / h**2
             
-            # 下边界 (j = 0)
+            # bottom
             if j == 0 and bc_types.get("bottom") == "Neumann":
                 central_coeff += 1.0 / h**2
             
-            # 上边界 (j = ny_solve - 1)
+            # top
             if j == ny_solve - 1 and bc_types.get("top") == "Neumann":
                 central_coeff += 1.0 / h**2
             
             A[p, p] = central_coeff
             
-            # 右邻居 (i+1, j)
+            # right neighbor
             if i < nx_solve - 1:
                 A[p, p+1] = 1.0 / h**2
             
-            # 左邻居 (i-1, j)
+            # left neighbor
             if i > 0:
                 A[p, p-1] = 1.0 / h**2
             
-            # 上邻居 (i, j+1)
+            # top neighbor
             if j < ny_solve - 1:
                 A[p, p+nx_solve] = 1.0 / h**2
             
-            # 下邻居 (i, j-1)
+            # bottom neighbor
             if j > 0:
                 A[p, p-nx_solve] = 1.0 / h**2
 
-    # 转换为 CSR 格式（适合求解运算）
+    # CSR format (for solving)
     return A.tocsr(), nx_solve, ny_solve
 
 
@@ -71,7 +70,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
             i_global = i + 1
             j_global = j + 1
             
-            # --- 左边界 ---
+            # left boundary
             if i == 0 and "left" in bc_values:
                 if bc_types.get("left") == "Dirichlet":
                     val = _get_bc_value(bc_values["left"], j_global)
@@ -80,7 +79,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
                     g = _get_bc_value(bc_values["left"], j_global)
                     b[p] -= (1/h) * g
             
-            # --- 右边界 ---
+            # right boundary
             if i == nx_solve - 1 and "right" in bc_values:
                 if bc_types.get("right") == "Dirichlet":
                     val = _get_bc_value(bc_values["right"], j_global)
@@ -89,7 +88,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
                     g = _get_bc_value(bc_values["right"], j_global)
                     b[p] += (1/h) * g
             
-            # --- 下边界 ---
+            # bottom boundary
             if j == 0 and "bottom" in bc_values:
                 if bc_types.get("bottom") == "Dirichlet":
                     val = _get_bc_value(bc_values["bottom"], i_global)
@@ -98,7 +97,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
                     g = _get_bc_value(bc_values["bottom"], i_global)
                     b[p] -= (1/h) * g
             
-            # --- 上边界 ---
+            # top boundary
             if j == ny_solve - 1 and "top" in bc_values:
                 if bc_types.get("top") == "Dirichlet":
                     val = _get_bc_value(bc_values["top"], i_global)
@@ -111,16 +110,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
 
 
 def _get_bc_value(value, index):
-    """
-    辅助函数：从边界值中提取特定索引的值
-    
-    参数:
-        value : 标量或数组
-        index : 索引
-    
-    返回:
-        标量值
-    """
+    # get the value of certain position of the boundary
     if np.isscalar(value):
         return value
     elif isinstance(value, (np.ndarray, list)):

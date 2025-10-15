@@ -1,5 +1,5 @@
 # common/boundary_config.py
-# 采用数学坐标系，从下往上，从左往右
+# From bottom to top, from left to right
 
 import numpy as np
 from . import utils
@@ -114,24 +114,3 @@ def get_boundary_conditions(room_id, gamma1, gamma2, gamma3=None, dx=None, dy=No
     
     else:
         raise ValueError(f"Error: {room_id} does not exist!")
-
-
-# def initialize_interface_variables(dx=None, dy=None):
-#     """
-#     初始化接口温度/热流分布变量
-    
-#     参数:
-#         dx, dy : float  网格间距（可选）
-    
-#     返回:
-#         gamma1 : ndarray (Ny_interface,) 接口Γ1初始值
-#         gamma2 : ndarray (Ny_interface,) 接口Γ2初始值
-#         interface_info : dict  接口网格信息
-#     """
-#     interface_info = get_interface_grid_info(dx, dy)
-#     Ny_interface = interface_info['Ny_interface']
-    
-#     gamma1 = np.full(Ny_interface, INTERFACE_INIT_TEMP)
-#     gamma2 = np.full(Ny_interface, INTERFACE_INIT_TEMP)
-    
-#     return gamma1, gamma2, interface_info

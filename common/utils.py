@@ -53,11 +53,11 @@ def get_room_dimensions(new_apt=False):
         }
 
 def get_default_dx():
-    """返回默认网格间距"""
+    """Return default grid spacing"""
     return DEFAULT_DX
 
 def get_default_dy():
-    """返回默认网格间距"""
+    """Return default grid spacing"""
     return DEFAULT_DY
 
 def compute_grid_size(Lx, Ly, dx=None, dy=None):
@@ -128,38 +128,3 @@ def get_interface_grid_info(dx=None, dy=None):
         'Ny_interface': [Ny_interface, Ny_interface_new],
     }
 
-# def generate_grid(Lx, Ly, dx):
-#     """生成笛卡尔网格坐标"""
-#     Nx, Ny = compute_grid_size(Lx, Ly, dx)
-#     x = np.linspace(0, Lx, Nx)
-#     y = np.linspace(0, Ly, Ny)
-#     X, Y = np.meshgrid(x, y, indexing='ij')
-#     return X, Y, Nx, Ny
-
-
-# def extract_left_boundary(u_2d):
-#     """
-#     从二维解矩阵中提取左边界的值
-#     """
-#     return u_2d[0, :].copy()
-
-
-# def extract_right_boundary(u_2d):
-#     """
-#     从二维解矩阵中提取右边界的值
-#     """
-#     return u_2d[-1, :].copy()
-
-
-# def extract_bottom_boundary(u_2d):
-#     """
-#     从二维解矩阵中提取下边界的值
-#     """
-#     return u_2d[:, 0].copy()
-
-
-# def extract_top_boundary(u_2d):
-#     """
-#     从二维解矩阵中提取上边界的值
-#     """
-#     return u_2d[:, -1].copy()
