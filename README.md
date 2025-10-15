@@ -26,7 +26,9 @@ Outputs:
 5) Results are saved under output/ (and ext_output/ for the extension)
 
 CLI examples:
+
     mpiexec -n 4 python main.py --heater-temp 20
+    
 Other parameters can be provided similarly; defaults match the assignment specification.
 
 
