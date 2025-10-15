@@ -12,7 +12,7 @@
     │   └── utils.py            # Grid utilities and helpers (extension-ready)
     └── main.py                 # Entrypoint (extension-ready)
 
-## Run :
+## Run
     mpiexec -n 4 python main.py
     mpiexec -n 5 python main.py -n   # for the 4-room extension
 
@@ -32,7 +32,7 @@ CLI examples for varying parameters (heater temperature):
 Other parameters can be provided similarly; defaults match the assignment specification.
 
 
-## Group contributions:
+## Group contributions
 Zhe Zhang: implemented mpi_solver.py for parallel Dirichlet–Neumann iteration with MPI and main.py as the entrypoint for orchestrating the thermal simulation and result analysis.
 
 Jiazhuang Chen: 
