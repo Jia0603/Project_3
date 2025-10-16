@@ -41,4 +41,4 @@ Ruizhen Shen: implemented the visualization for rooms, the heating evaluation an
 
 Jiuen Feng: 
 
-Jia Gu: 
+Jia Gu: Implemented ext_mpi_solver.py, and modified utils.py, boundary_config.py, and main.py for the extension task.
