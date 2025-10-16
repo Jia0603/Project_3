@@ -116,7 +116,7 @@ def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config
         for dst_rank in (1, 2, 3, 4):
             comm.send(True, dest=dst_rank, tag=TAG_DONE)
 
-        # 广播最终接口温度，收集子进程的最终解
+        # broadcast interface paras
         comm.bcast(gamma1, root=0)
         comm.bcast(gamma2, root=0)
         comm.bcast(gamma3, root=0)
