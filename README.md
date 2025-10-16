@@ -39,6 +39,6 @@ Jiazhuang Chen: Writing the notebook and code of Extension Task 2 section
 
 Ruizhen Shen: implemented the visualization for rooms, the heating evaluation and tested different parameters.
 
-Jiuen Feng: 
+Jiuen Feng: Writing the initialized settings. Room config and matrix build.
 
 Jia Gu: Implemented ext_mpi_solver.py, and modified utils.py, boundary_config.py, and main.py for the extension task.
