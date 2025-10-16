@@ -18,7 +18,7 @@ HEATER_TEMP = 40.0
 WINDOW_TEMP = 5.0           
 WALL_TEMP = 15.0
 
-def set_boundary_conditions(heater=None, window=None, wall=None):###############这一段是我额外加的，为了能在main里改这里的参
+def set_boundary_conditions(heater=None, window=None, wall=None):
     """
     Allow dynamic override of boundary temperatures.
     Example:
@@ -107,7 +107,7 @@ def get_room_grid_info(room_id, dx=None, dy=None, new_apt=False):
 
 def get_interface_grid_info(dx=None, dy=None):
     """
-    返回:
+    Return:
         dict : {
             'Ny_interface': list,         
             # 'y_interface': ndarray,     
