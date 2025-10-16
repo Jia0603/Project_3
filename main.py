@@ -115,35 +115,35 @@ def main(apt_new=False, heater_temp=40.0, window_temp=5.0, wall_temp=15.0,
     print("gamma1 shape:", gamma1.shape, "gamma2 shape:", gamma2.shape)
     '''
 
-    all_valid_temps = []
-    if apt_new == False:
-        u = [u1, u2, u3]
-    else:
-        u = [u1, u2, u3, u4]
-    for room_temp in u:
-        valid_temps = room_temp[~np.isnan(room_temp)] 
-        all_valid_temps.extend(valid_temps)
-    all_valid_temps = np.array(all_valid_temps)
+    # all_valid_temps = []
+    # if apt_new == False:
+    #     u = [u1, u2, u3]
+    # else:
+    #     u = [u1, u2, u3, u4]
+    # for room_temp in u:
+    #     valid_temps = room_temp[~np.isnan(room_temp)] 
+    #     all_valid_temps.extend(valid_temps)
+    # all_valid_temps = np.array(all_valid_temps)
 
-    min_temp = np.min(all_valid_temps)
-    avg_temp = np.mean(all_valid_temps)
-    max_temp = np.max(all_valid_temps)
+    # min_temp = np.min(all_valid_temps)
+    # avg_temp = np.mean(all_valid_temps)
+    # max_temp = np.max(all_valid_temps)
 
 
-    print("\n" + "="*50)
-    print("Is the heating in the flat adequate?")
-    print("="*50)
-    print(f"1. Lowest temp:{min_temp:.2f} °C")
-    print(f"2. Averaged temp:{avg_temp:.2f}°C")
-    print(f"3. Highest temp:{max_temp:.2f}°C")
-    print("-"*50)
+    # print("\n" + "="*50)
+    # print("Is the heating in the flat adequate?")
+    # print("="*50)
+    # print(f"1. Lowest temp:{min_temp:.2f} °C")
+    # print(f"2. Averaged temp:{avg_temp:.2f}°C")
+    # print(f"3. Highest temp:{max_temp:.2f}°C")
+    # print("-"*50)
 
-    if avg_temp > 18.0:
-        print("Averged tempture > 18°C. The heating in the flat is adequate.")
-    else:
-        print("Averged tempture < 18°C. The flat is not warm enough.")
+    # if avg_temp > 18.0:
+    #     print("Averged tempture > 18°C. The heating in the flat is adequate.")
+    # else:
+    #     print("Averged tempture < 18°C. The flat is not warm enough.")
             
-    print("="*50 + "\n")
+    # print("="*50 + "\n")
 
     # Create output directory and save arrays
     if apt_new == False:
