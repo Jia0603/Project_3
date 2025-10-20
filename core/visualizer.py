@@ -110,6 +110,98 @@ def visualize_all_rooms(result, dx, dy, apt_new=False):
 
 
 # ===================================
+# --- stitch full apartment image ---
+# ===================================
+def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
+    """
+    Stitch room temperature fields into one apartment map.
+    Geometry:
+      - Room1 bottom aligns with Room2 bottom.
+      - Room3 top aligns with Room2 top.
+      - For 4-room case: Room4 is placed below Room3, sharing right edge with Room2.
+    """
+
+    # Each u_full shape = (Nx, Ny) = (width, height)
+    w1, h1 = u1_full.shape
+    w2, h2 = u2_full.shape
+    w3, h3 = u3_full.shape
+    if u4_full is not None:
+        w4, h4 = u4_full.shape
+    else:
+        w4, h4 = 0, 0
+
+    # Canvas size
+    if u4_full is None:
+        # 3-room layout
+        W = w1 + w2 + w3
+        H = max(h2, h1, h3)
+        full = np.full((W, H), np.nan)
+
+        # Room2 baseline (0,0)
+        # Room1 bottom aligned with Room2 bottom
+        y1_bot = 0
+        # Room2 bottom aligned baseline
+        y2_bot = 0
+        # Room3 top aligned with Room2 top
+        y3_bot = h2 - h3
+
+        # Paste
+        full[0:w1, y1_bot:y1_bot + h1] = u1_full              # Ω1 (left)
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full        # Ω2 (middle)
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full  # Ω3 (right-top)
+
+    else:
+        # 4-room layout
+        W = w1 + w2 + max(w3, w4)
+        H = h2 + h4  # extra vertical room for Ω4
+        full = np.full((W, H), np.nan)
+
+        # Room2 bottom on baseline
+        y2_bot = h4  # lift Ω2 so that Ω4 fits under Ω3
+        # Room1 bottom align with Room2 bottom
+        y1_bot = y2_bot
+        # Room3 top align with Room2 top
+        y3_bot = y2_bot + h2 - h3
+        # Room4 directly under Room3
+        y4_bot = 0
+
+        # Paste
+        full[0:w1, y1_bot:y1_bot + h1] = u1_full                 # Ω1 left
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full           # Ω2 middle
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full # Ω3 right-top
+        full[w1 + w2:w1 + w2 + w4, y4_bot:y4_bot + h4] = u4_full # Ω4 right-bottom
+
+    return full
+
+
+
+
+# ===================================
+# --- save stitched apartment image ---
+# ===================================
+def save_combined_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
+    """
+    Combine all reconstructed room fields into a single apartment map
+    and save it as one image file.
+    """
+    full_map = stitch_apartment(u1_full, u2_full, u3_full, u4_full, apt_new)
+    out_dir = os.path.join(os.path.dirname(__file__), "..", "ext_output" if apt_new else "output")
+    os.makedirs(out_dir, exist_ok=True)
+
+    plt.figure(figsize=(8, 6))
+    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40)
+    plt.colorbar(label="Temperature (°C)")
+    plt.title("Full Apartment Temperature Map")
+    plt.xlabel("x [m]"); plt.ylabel("y [m]")
+    plt.tight_layout()
+    path = os.path.join(out_dir, "combined_apartment.png")
+    plt.savefig(path, dpi=200)
+    plt.close()
+    print(f"Saved combined apartment map to {path}")
+
+
+
+# ===================================
 # --- compute & judge heating ---
 # ===================================
 def judge_heating(u1_full, u2_full, u3_full, u4_full=None, threshold=18):
@@ -152,3 +244,4 @@ def visualize_pipeline(result, dx, dy, apt_new=False):
     """
     u1_full, u2_full, u3_full, u4_full = visualize_all_rooms(result, dx, dy, apt_new)
     judge_heating(u1_full, u2_full, u3_full, u4_full)
+    save_combined_apartment(u1_full, u2_full, u3_full, u4_full, apt_new)
