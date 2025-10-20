@@ -10,7 +10,7 @@ Handles visualization for Project 3 & 3a:
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from common.utils import get_room_grid_info
+from common.utils import get_room_grid_info, get_interface_grid_info
 from common.boundary_config import get_boundary_conditions
 
 
@@ -27,12 +27,14 @@ def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr, gamma3_arr=Non
     info = get_room_grid_info(room_id, dx, dy, new_apt)
     Nx, Ny = info["Nx"], info["Ny"]
     bc_types, bc_values = get_boundary_conditions(room_id, gamma1_arr, gamma2_arr, gamma3_arr, dx, dy)
-
+    Ny_interface = get_interface_grid_info(dx, dy)['Ny_interface'][0]
     i_start, i_end = 1, Nx - 1
     j_start, j_end = 1, Ny - 1
     u_full = np.full((Nx, Ny), np.nan, dtype=float)
     u_full[i_start:i_end, j_start:j_end] = u_interior.T
-
+    if room_id == "room2":
+        bc_values["left"][Ny_interface-1] = (bc_values["left"][Ny_interface] + bc_values["left"][Ny_interface-2]) / 2
+        bc_values["right"][-Ny_interface] = (bc_values["right"][-Ny_interface-1] + bc_values["right"][-Ny_interface+1]) / 2
     def get_val(v, idx):
         return v if np.isscalar(v) else v[idx]
 
