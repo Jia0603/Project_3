@@ -184,7 +184,7 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
     Returns the 2D temperature field u_2d with shape (ny_solve, nx_solve).
     """
     if solver_config is None:
-        solver_config = {'solver_type': 'spsolve', 'tol': 1e-6, 'maxiter': 10000}
+        solver_config = {'solver_type': 'spsolve', 'tol': 1e-4, 'maxiter': 10000}
 
     info = get_room_grid_info(room_id, dx, dy)
     bc_types, bc_values = get_boundary_conditions(room_id, gamma1, gamma2, None, dx, dy)
@@ -303,6 +303,7 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=No
             # u1 shape: (ny_solve, nx_solve), right boundary is u1[:, -1]
             # u3 shape: (ny_solve, nx_solve), left boundary is u3[:, 0]
             gamma1_from_room1 = u1[:, -1].copy()  # Room1 right boundary (length Ny_interface-2)
+            #gamma1_from_room1 = u1[-1, :].copy()
             gamma2_from_room3 = u3[:, 0].copy()   # Room3 left boundary (length Ny_interface-2)
             
             # Relaxation: blend new values from outer rooms with old interface values

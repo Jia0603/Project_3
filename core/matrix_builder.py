@@ -86,7 +86,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
                     b[p] -= (1/h**2) * val
                 elif bc_types.get("right") == "Neumann":
                     g = _get_bc_value(bc_values["right"], j_global)
-                    b[p] += (1/h) * g
+                    b[p] -= (1/h) * g
             
             # bottom boundary
             if j == 0 and "bottom" in bc_values:
@@ -104,7 +104,7 @@ def build_b_mixed(nx, ny, h, bc_types, bc_values):
                     b[p] -= (1/h**2) * val
                 elif bc_types.get("top") == "Neumann":
                     g = _get_bc_value(bc_values["top"], i_global)
-                    b[p] += (1/h) * g
+                    b[p] -= (1/h) * g
     
     return b
 
