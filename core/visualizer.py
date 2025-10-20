@@ -92,7 +92,7 @@ def visualize_all_rooms(result, dx, dy, apt_new=False):
     vmin, vmax = 5.0, 40.0
     def save_plot(u_full, title, path, figsize=(4, 4)):
         plt.figure(figsize=figsize)
-        plt.imshow(u_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax, cmap='hot')
+        plt.imshow(u_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax, cmap='plasma')
         plt.colorbar(label="Temperature (°C)")
         plt.xlabel("x [m]"); plt.ylabel("y [m]"); plt.title(title)
         plt.tight_layout()
@@ -197,7 +197,7 @@ def save_combined_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=Fal
     plt.figure(figsize=(8, 6))
     
     # Use equal aspect and nearest interpolation to avoid thin seams at interfaces
-    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40, cmap='hot')
+    plt.imshow(full_map.T, origin="lower", aspect="equal", vmin=5, vmax=40, cmap='plasma', interpolation='nearest')
     #plt.imshow(full_map.T, origin="lower", aspect="equal", vmin=5, vmax=40, cmap='hot', interpolation='nearest')
     plt.colorbar(label="Temperature (°C)")
     plt.title("Full Apartment Temperature Map")

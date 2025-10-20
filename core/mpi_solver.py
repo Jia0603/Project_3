@@ -90,14 +90,14 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=No
         print(f"[rank0] Start D-N: iters={num_iters}, ω={omega}, dx={dx}")
         
         for iter_num in range(num_iters):
-            print(f"[rank0] iter {iter_num+1}: bcast gammas")
+            # print(f"[rank0] iter {iter_num+1}: bcast gammas")
             # ===== PHASE 1: All workers receive current interface values =====
             comm.bcast(gamma1, root=0)
             comm.bcast(gamma2, root=0)
             
             # ===== PHASE 2: Room2 solves with Dirichlet BC =====
             u2 = comm.recv(source=2, tag=TAG_SOLUTION)
-            print(f"[rank0] iter {iter_num+1}: recv u2 shape={None if u2 is None else u2.shape}")
+            # print(f"[rank0] iter {iter_num+1}: recv u2 shape={None if u2 is None else u2.shape}")
             
             # Extract interface values from room2's solution for next Dirichlet BC
             # Room2's left boundary → interface gamma1 (but we'll update it after getting room1)
@@ -118,13 +118,13 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=No
             # Broadcast Neumann BC (length Ny_interface)
             comm.bcast(neumann1, root=0)
             comm.bcast(neumann2, root=0)
-            print(f"[rank0] iter {iter_num+1}: bcast neumann done")
+            # print(f"[rank0] iter {iter_num+1}: bcast neumann done")
             
             # ===== PHASE 3: Room1 and Room3 solve with Neumann BC =====
             u1 = comm.recv(source=1, tag=TAG_SOLUTION)
-            print(f"[rank0] iter {iter_num+1}: recv u1 shape={None if u1 is None else u1.shape}")
+            # print(f"[rank0] iter {iter_num+1}: recv u1 shape={None if u1 is None else u1.shape}")
             u3 = comm.recv(source=3, tag=TAG_SOLUTION)
-            print(f"[rank0] iter {iter_num+1}: recv u3 shape={None if u3 is None else u3.shape}")
+            # print(f"[rank0] iter {iter_num+1}: recv u3 shape={None if u3 is None else u3.shape}")
             
             # ===== PHASE 4: Relaxation update on interface values =====
             # Extract new interface values from outer rooms
@@ -154,7 +154,7 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=No
         for worker_rank in [1, 2, 3]:
             comm.send(True, dest=worker_rank, tag=TAG_DONE)
         
-        print("[rank0] Iterations completed successfully!")
+        # print("[rank0] Iterations completed successfully!")
         return {
             "u1": u1,
             "u2": u2,
@@ -171,33 +171,33 @@ def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=No
         # PHASE 1: All workers receive interface Dirichlet values
         gamma1 = comm.bcast(None, root=0)
         gamma2 = comm.bcast(None, root=0)
-        if rank == 2:
-            print(f"[rank2] iter {iter_num+1}: got gammas len={len(gamma1)},{len(gamma2)}")
+        # if rank == 2:
+        #     print(f"[rank2] iter {iter_num+1}: got gammas len={len(gamma1)},{len(gamma2)}")
         
         # PHASE 2: Only room2 solves with Dirichlet BC
         if rank == 2:
             u = _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config)
-            print(f"[rank2] iter {iter_num+1}: send u2 shape={u.shape}")
+            # print(f"[rank2] iter {iter_num+1}: send u2 shape={u.shape}")
             comm.send(u, dest=0, tag=TAG_SOLUTION)
         
         # PHASE 3: All workers receive Neumann values
         neumann1 = comm.bcast(None, root=0)
         neumann2 = comm.bcast(None, root=0)
-        if rank in (1,3):
-            print(f"[rank{rank}] iter {iter_num+1}: got neumann len={len(neumann1)},{len(neumann2)}")
+        # if rank in (1,3):
+        #     print(f"[rank{rank}] iter {iter_num+1}: got neumann len={len(neumann1)},{len(neumann2)}")
         
         # PHASE 4: Room1 and room3 solve with Neumann BC
         if rank == 1:
             # Room1: right boundary is Neumann. boundary_config expects this in gamma1 position.
             assert neumann1.shape[0] == get_room_grid_info("room1", dx, dy)["Ny"], "rank1 neumann length mismatch"
             u = _solve_room(room_id, neumann1, None, dx, dy, solver_config)
-            print(f"[rank1] iter {iter_num+1}: send u1 shape={u.shape}")
+            # print(f"[rank1] iter {iter_num+1}: send u1 shape={u.shape}")
             comm.send(u, dest=0, tag=TAG_SOLUTION)
         elif rank == 3:
             # Room3: left boundary is Neumann. boundary_config expects this in gamma2 position.
             assert neumann2.shape[0] == get_room_grid_info("room3", dx, dy)["Ny"], "rank3 neumann length mismatch"
             u = _solve_room(room_id, None, neumann2, dx, dy, solver_config)
-            print(f"[rank3] iter {iter_num+1}: send u3 shape={u.shape}")
+            # print(f"[rank3] iter {iter_num+1}: send u3 shape={u.shape}")
             comm.send(u, dest=0, tag=TAG_SOLUTION)
     
     # Wait for termination signal
