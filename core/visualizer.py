@@ -118,7 +118,7 @@ def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
     Geometry:
       - Room1 bottom aligns with Room2 bottom.
       - Room3 top aligns with Room2 top.
-      - For 4-room case: Room4 is placed below Room3, sharing right edge with Room2.
+      - Room4 (if exists) attaches directly below Room3.
     """
 
     # Each u_full shape = (Nx, Ny) = (width, height)
@@ -130,48 +130,43 @@ def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
     else:
         w4, h4 = 0, 0
 
-    # Canvas size
     if u4_full is None:
-        # 3-room layout
+        # ---------- 3-room layout ----------
         W = w1 + w2 + w3
-        H = max(h2, h1, h3)
+        H = max(h1, h2, h3)
         full = np.full((W, H), np.nan)
 
-        # Room2 baseline (0,0)
-        # Room1 bottom aligned with Room2 bottom
-        y1_bot = 0
-        # Room2 bottom aligned baseline
+        # Alignment rules
+        y1_bot = 0                     # Room1 bottom with Room2 bottom
         y2_bot = 0
-        # Room3 top aligned with Room2 top
-        y3_bot = h2 - h3
+        y3_bot = h2 - h3               # Room3 top align with Room2 top
 
-        # Paste
-        full[0:w1, y1_bot:y1_bot + h1] = u1_full              # Ω1 (left)
-        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full        # Ω2 (middle)
-        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full  # Ω3 (right-top)
+        # Paste rooms
+        full[0:w1, y1_bot:y1_bot + h1] = u1_full
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full
 
     else:
-        # 4-room layout
+        # ---------- 4-room layout ----------
+        # Ω4 attaches under Ω3
         W = w1 + w2 + max(w3, w4)
-        H = h2 + h4  # extra vertical room for Ω4
+        H = max(h1, h2, h3 + h4)
         full = np.full((W, H), np.nan)
 
-        # Room2 bottom on baseline
-        y2_bot = h4  # lift Ω2 so that Ω4 fits under Ω3
-        # Room1 bottom align with Room2 bottom
-        y1_bot = y2_bot
-        # Room3 top align with Room2 top
-        y3_bot = y2_bot + h2 - h3
-        # Room4 directly under Room3
-        y4_bot = 0
+        # Align main bodies
+        y2_bot = 0                      # base line for Ω2
+        y1_bot = 0                      # Ω1 bottom with Ω2 bottom
+        y3_bot = h2 - h3                # Ω3 top = Ω2 top
+        y4_bot = y3_bot - h4            # Ω4 top = Ω3 bottom
 
-        # Paste
-        full[0:w1, y1_bot:y1_bot + h1] = u1_full                 # Ω1 left
-        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full           # Ω2 middle
-        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full # Ω3 right-top
-        full[w1 + w2:w1 + w2 + w4, y4_bot:y4_bot + h4] = u4_full # Ω4 right-bottom
+        # Paste rooms
+        full[0:w1, y1_bot:y1_bot + h1] = u1_full                     # Ω1 left
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full               # Ω2 middle
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full     # Ω3 right-top
+        full[w1 + w2:w1 + w2 + w4, y4_bot:y4_bot + h4] = u4_full     # Ω4 right-below Ω3
 
     return full
+
 
 
 
