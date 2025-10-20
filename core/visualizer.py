@@ -184,7 +184,7 @@ def save_combined_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=Fal
     os.makedirs(out_dir, exist_ok=True)
 
     plt.figure(figsize=(8, 6))
-    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40)
+    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40, cmap= 'hot')
     plt.colorbar(label="Temperature (°C)")
     plt.title("Full Apartment Temperature Map")
     plt.xlabel("x [m]"); plt.ylabel("y [m]")

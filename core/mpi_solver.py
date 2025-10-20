@@ -220,7 +220,7 @@ def _solve_room(room_id, gamma1, gamma2, dx, dy, solver_config=None):
     return u
 
 
-def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=30, solver_config=None):
+def dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=100, solver_config=None):
     """
     Dirichlet–Neumann iteration following the PDF specification:
     

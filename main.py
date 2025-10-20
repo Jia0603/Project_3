@@ -29,9 +29,9 @@ def parse_arguments():
                         help='Wall temperature (°C)')
     parser.add_argument('--iters', type=int, default=10,
                         help='Number of Dirichlet-Neumann iterations')
-    parser.add_argument('--dx', type=float, default=None,
+    parser.add_argument('--dx', type=float, default=0.02,
                         help='Grid spacing Δx (default: get_default_dx())')
-    parser.add_argument('--dy', type=float, default=None,
+    parser.add_argument('--dy', type=float, default=0.02,
                         help='Grid spacing Δy (default: get_default_dy())')
     parser.add_argument('--solver', type=str, default='direct',
                         choices=['direct', 'cg', 'gmres', 'spsolve'],
