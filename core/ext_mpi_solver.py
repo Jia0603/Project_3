@@ -53,105 +53,149 @@ def solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config=None):
 
 def ext_dirichlet_neumann_iterate(dx, dy, omega=0.8, num_iters=10, solver_config=None):
     """
-    Dirichlet-Neumann iteration using MPI.
-    Steps: “Ω2 -> (Ω1, Ω3, Ω4) -> relaxation” 
+    Dirichlet–Neumann iteration for 4-room apartment:
+      Phase A: solve Ω2 with Dirichlet (gamma1,gamma2,gamma3) -> compute Neumann fluxes for Ω1/Ω3/Ω4
+      Phase B: solve Ω1, Ω3, Ω4 with those Neumann -> return interface temps -> relax gamma
 
-    Return:
-        dict: only for rank0 process {"u1": ndarray, "u2": ndarray, "u3": ndarray, "gamma1": ndarray, "gamma2": ndarray}
-        sub-processes return None
+    MPI ranks: 5 processes (rank0: root, rank1: room1, rank2: room2, rank3: room3, rank4: room4)
+    
+    Returns:
+        dict: Root returns {"u1", "u2", "u3", "u4", "gamma1", "gamma2", "gamma3"}
+        Workers return None
     """
-    # Initialization
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    # check number of precesses == 5
     if size != 5:
         if rank == 0:
-            raise ValueError("5 processes required! Run the program with 'mpiexec -n 5 python file_name.py -n' instead.")
-        comm.Abort() 
+            raise ValueError("This simulation requires 5 MPI ranks. Run with 'mpiexec -n 5 python main.py -n'")
+        comm.Abort()
 
+    # Initialize interface arrays
     room1_info = get_room_grid_info("room1", dx, dy, new_apt=True)
     room4_info = get_room_grid_info("room4", dx, dy, new_apt=True)
     Ny_interface = room1_info["Ny"]
     Ny_interface_new = room4_info["Ny"]
-    gamma1 = np.full(Ny_interface, 20.0, dtype=float)
-    gamma2 = np.full(Ny_interface, 20.0, dtype=float)
-    gamma3 = np.full(Ny_interface_new, 20.0, dtype=float)
+    
+    # MPI communication tags
+    TAG_SOLUTION = 12
+    TAG_DONE = 99
 
-    TAG_G1_SEND = 10  # tag for iteration stages
-    TAG_G2_SEND = 11  # tag for sending final solution
-    TAG_DONE = 99     # interation completed
-
-    # rank0
+    # ========== ROOT PROCESS (rank 0) ==========
     if rank == 0:
-        u1 = u2 = u3 = u4 = None
-        for _ in range(num_iters):
-            # broadcast current temp on the interfaces to sub-processes
+        # Initialize interface values
+        gamma1 = np.full(Ny_interface, 20.0, dtype=float)  # Ω₁-Ω₂ interface
+        gamma2 = np.full(Ny_interface, 20.0, dtype=float)  # Ω₂-Ω₃ interface
+        gamma3 = np.full(Ny_interface_new, 20.0, dtype=float)  # Ω₂-Ω₄ interface
+        
+        print(f"Starting 4-room Dirichlet-Neumann iteration: {num_iters} iters, ω={omega}, dx={dx}")
+        
+        for iter_num in range(num_iters):
+            # ===== PHASE 1: All workers receive current interface values =====
             comm.bcast(gamma1, root=0)
             comm.bcast(gamma2, root=0)
             comm.bcast(gamma3, root=0)
-
-            # iterfaces update
-            u1 = comm.recv(source=1, tag=TAG_G1_SEND)
-            _ = comm.recv(source=2, tag=TAG_G1_SEND)  # Ω2: room 2 skip updates
-            u3 = comm.recv(source=3, tag=TAG_G1_SEND)
-            u4 = comm.recv(source=4, tag=TAG_G1_SEND)
-
-            # relaxation
-            u1_right = u1[-1, :] 
-            u3_left = u3[0, :]
-            u4_left = u4[0, :]   
             
+            # ===== PHASE 2: Room2 solves with Dirichlet BC =====
+            u2 = comm.recv(source=2, tag=TAG_SOLUTION)
+            
+            # Compute Neumann BC from room2's solution and SLICE to interface lengths
+            # Room1 interface segment (lower segment along Ω2 left boundary)
+            neumann1 = (u2[:Ny_interface, 1] - u2[:Ny_interface, 0]) / dx
+            # Room3 interface segment (upper segment along Ω2 right boundary)
+            neumann2 = -(u2[-Ny_interface:, -1] - u2[-Ny_interface:, -2]) / dx
+            # Room4 interface segment (middle segment along Ω2 right boundary)
+            neumann3 = -(u2[-(Ny_interface + Ny_interface_new):-Ny_interface, -1] - 
+                        u2[-(Ny_interface + Ny_interface_new):-Ny_interface, -2]) / dx
+
+            # Sanity check
+            assert neumann1.shape[0] == Ny_interface, f"neumann1 len {neumann1.shape[0]} != Ny_interface {Ny_interface}"
+            assert neumann2.shape[0] == Ny_interface, f"neumann2 len {neumann2.shape[0]} != Ny_interface {Ny_interface}"
+            assert neumann3.shape[0] == Ny_interface_new, f"neumann3 len {neumann3.shape[0]} != Ny_interface_new {Ny_interface_new}"
+
+            # Broadcast Neumann BC
+            comm.bcast(neumann1, root=0)
+            comm.bcast(neumann2, root=0)
+            comm.bcast(neumann3, root=0)
+            
+            # ===== PHASE 3: Room1, Room3, Room4 solve with Neumann BC =====
+            u1 = comm.recv(source=1, tag=TAG_SOLUTION)
+            u3 = comm.recv(source=3, tag=TAG_SOLUTION)
+            u4 = comm.recv(source=4, tag=TAG_SOLUTION)
+            
+            # ===== PHASE 4: Relaxation update on interface values =====
+            # Extract new interface values from outer rooms
+            gamma1_from_room1 = u1[:, -1].copy()  # Room1 right boundary
+            gamma2_from_room3 = u3[:, 0].copy()   # Room3 left boundary
+            gamma3_from_room4 = u4[:, 0].copy()   # Room4 left boundary
+            
+            # Relaxation: blend new values from outer rooms with old interface values
             gamma1_new = gamma1.copy()
             gamma2_new = gamma2.copy()
             gamma3_new = gamma3.copy()
-            gamma1_new[1:-1] = omega * u1_right + (1 - omega) * gamma1[1:-1]
-            gamma2_new[1:-1] = omega * u3_left + (1 - omega) * gamma2[1:-1]
-            gamma3_new[1:-1] = omega * u4_left + (1 - omega) * gamma3[1:-1]
+            gamma1_new[1:-1] = omega * gamma1_from_room1 + (1 - omega) * gamma1[1:-1]
+            gamma2_new[1:-1] = omega * gamma2_from_room3 + (1 - omega) * gamma2[1:-1]
+            gamma3_new[1:-1] = omega * gamma3_from_room4 + (1 - omega) * gamma3[1:-1]
             
-            gamma1, gamma2, gamma3 = gamma1_new, gamma2_new, gamma3_new
-
-        # terminate sub-processes
-        for dst_rank in (1, 2, 3, 4):
-            comm.send(True, dest=dst_rank, tag=TAG_DONE)
-
-        # broadcast interface paras
-        comm.bcast(gamma1, root=0)
-        comm.bcast(gamma2, root=0)
-        comm.bcast(gamma3, root=0)
-        u1 = comm.recv(source=1, tag=TAG_G2_SEND)
-        u2 = comm.recv(source=2, tag=TAG_G2_SEND)
-        u3 = comm.recv(source=3, tag=TAG_G2_SEND)
-        u4 = comm.recv(source=4, tag=TAG_G2_SEND)
-
-        return {"u1": u1, "u2": u2, "u3": u3, "u4": u4, "gamma1": gamma1, "gamma2": gamma2, "gamma3": gamma3}
-
-    # Solve sub-spaces（rank1:Ω1, rank2:Ω2, rank3:Ω3, rank4:Ω4）
-    if rank in (1, 2, 3, 4):
+            gamma1 = gamma1_new
+            gamma2 = gamma2_new
+            gamma3 = gamma3_new
+            
+            # Progress logging
+            if (iter_num + 1) % 2 == 0 or iter_num == num_iters - 1:
+                avg_gamma = (np.mean(gamma1) + np.mean(gamma2) + np.mean(gamma3)) / 3
+                print(f"Iteration {iter_num + 1}/{num_iters}: avg_interface_temp={avg_gamma:.2f}°C")
         
-        room_id_map = {1: "room1", 2: "room2", 3: "room3", 4: "room4"}
-        room_id = room_id_map[rank]
-
-        for _ in range(num_iters):
-            # get interface temps
-            gamma1 = comm.bcast(None, root=0)
-            gamma2 = comm.bcast(None, root=0)
-            gamma3 = comm.bcast(None, root=0)
-
-            # solve Ax=b for {room_id}
-            u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config)
-
-            # send to main process
-            comm.send(u, dest=0, tag=TAG_G1_SEND)
+        # Signal workers that iterations are done
+        for worker_rank in [1, 2, 3, 4]:
+            comm.send(True, dest=worker_rank, tag=TAG_DONE)
         
-        _ = comm.recv(source=0, tag=TAG_DONE) # check if terminate
-
-        # final solve
+        print("4-room iterations completed successfully!")
+        return {
+            "u1": u1,
+            "u2": u2,
+            "u3": u3,
+            "u4": u4,
+            "gamma1": gamma1,
+            "gamma2": gamma2,
+            "gamma3": gamma3
+        }
+    
+    # ========== WORKER PROCESSES (rank 1, 2, 3, 4) ==========
+    room_map = {1: "room1", 2: "room2", 3: "room3", 4: "room4"}
+    room_id = room_map[rank]
+    
+    for _ in range(num_iters):
+        # PHASE 1: All workers receive interface Dirichlet values
         gamma1 = comm.bcast(None, root=0)
         gamma2 = comm.bcast(None, root=0)
         gamma3 = comm.bcast(None, root=0)
-        final_u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config)
-        comm.send(final_u, dest=0, tag=TAG_G2_SEND)
         
-        return None
+        # PHASE 2: Only room2 solves with Dirichlet BC
+        if rank == 2:
+            u = solve_room(room_id, gamma1, gamma2, gamma3, dx, dy, solver_config)
+            comm.send(u, dest=0, tag=TAG_SOLUTION)
+        
+        # PHASE 3: All workers receive Neumann values
+        neumann1 = comm.bcast(None, root=0)
+        neumann2 = comm.bcast(None, root=0)
+        neumann3 = comm.bcast(None, root=0)
+        
+        # PHASE 4: Room1, room3, room4 solve with Neumann BC
+        if rank == 1:
+            # Room1: right boundary is Neumann. boundary_config expects this in gamma1 position.
+            u = solve_room(room_id, neumann1, None, None, dx, dy, solver_config)
+            comm.send(u, dest=0, tag=TAG_SOLUTION)
+        elif rank == 3:
+            # Room3: left boundary is Neumann. boundary_config expects this in gamma2 position.
+            u = solve_room(room_id, None, neumann2, None, dx, dy, solver_config)
+            comm.send(u, dest=0, tag=TAG_SOLUTION)
+        elif rank == 4:
+            # Room4: left boundary is Neumann. boundary_config expects this in gamma3 position.
+            u = solve_room(room_id, None, None, neumann3, dx, dy, solver_config)
+            comm.send(u, dest=0, tag=TAG_SOLUTION)
+    
+    # Wait for termination signal
+    _ = comm.recv(source=0, tag=TAG_DONE)
+    return None

@@ -18,7 +18,7 @@ from common.boundary_config import get_boundary_conditions
 # ===================================
 # --- reconstruct single room ---
 # ===================================
-def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr, gamma3_arr=None, dx=1/20, dy=1/20):
+def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr, gamma3_arr=None, dx=0.02, dy=0.02):
     """
     Reconstruct full temperature field (including boundary).
     Works for both 3-room and 4-room layouts.
@@ -32,9 +32,10 @@ def reconstruct_full(u_interior, room_id, gamma1_arr, gamma2_arr, gamma3_arr=Non
     j_start, j_end = 1, Ny - 1
     u_full = np.full((Nx, Ny), np.nan, dtype=float)
     u_full[i_start:i_end, j_start:j_end] = u_interior.T
-    if room_id == "room2":
-        bc_values["left"][Ny_interface-1] = (bc_values["left"][Ny_interface] + bc_values["left"][Ny_interface-2]) / 2
-        bc_values["right"][-Ny_interface] = (bc_values["right"][-Ny_interface-1] + bc_values["right"][-Ny_interface+1]) / 2
+    # Remove interface smoothing to avoid artifacts at T-junctions
+    # if room_id == "room2" and gamma3_arr is None:
+    #     bc_values["left"][Ny_interface-1] = (bc_values["left"][Ny_interface] + bc_values["left"][Ny_interface-2]) / 2
+    #     bc_values["right"][-Ny_interface] = (bc_values["right"][-Ny_interface-1] + bc_values["right"][-Ny_interface+1]) / 2
     def get_val(v, idx):
         return v if np.isscalar(v) else v[idx]
 
@@ -91,7 +92,7 @@ def visualize_all_rooms(result, dx, dy, apt_new=False):
     vmin, vmax = 5.0, 40.0
     def save_plot(u_full, title, path, figsize=(4, 4)):
         plt.figure(figsize=figsize)
-        plt.imshow(u_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax)
+        plt.imshow(u_full.T, origin="lower", aspect="auto", vmin=vmin, vmax=vmax, cmap='hot')
         plt.colorbar(label="Temperature (°C)")
         plt.xlabel("x [m]"); plt.ylabel("y [m]"); plt.title(title)
         plt.tight_layout()
@@ -117,22 +118,30 @@ def visualize_all_rooms(result, dx, dy, apt_new=False):
 def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
     """
     Stitch room temperature fields into one apartment map.
+    Use interior fields only (remove one-cell boundary) to avoid double-drawing
+    at shared interfaces.
     Geometry:
       - Room1 bottom aligns with Room2 bottom.
       - Room3 top aligns with Room2 top.
       - Room4 (if exists) attaches directly below Room3.
     """
 
-    # Each u_full shape = (Nx, Ny) = (width, height)
-    w1, h1 = u1_full.shape
-    w2, h2 = u2_full.shape
-    w3, h3 = u3_full.shape
-    if u4_full is not None:
-        w4, h4 = u4_full.shape
+    # Extract interior only to avoid duplicate interface lines
+    u1_int = u1_full[1:-1, 1:-1]
+    u2_int = u2_full[1:-1, 1:-1]
+    u3_int = u3_full[1:-1, 1:-1]
+    u4_int = None if u4_full is None else u4_full[1:-1, 1:-1]
+
+    # Each interior shape = (Nx-2, Ny-2) = (width, height)
+    w1, h1 = u1_int.shape
+    w2, h2 = u2_int.shape
+    w3, h3 = u3_int.shape
+    if u4_int is not None:
+        w4, h4 = u4_int.shape
     else:
         w4, h4 = 0, 0
 
-    if u4_full is None:
+    if u4_int is None:
         # ---------- 3-room layout ----------
         W = w1 + w2 + w3
         H = max(h1, h2, h3)
@@ -143,10 +152,10 @@ def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
         y2_bot = 0
         y3_bot = h2 - h3               # Room3 top align with Room2 top
 
-        # Paste rooms
-        full[0:w1, y1_bot:y1_bot + h1] = u1_full
-        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full
-        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full
+        # Paste interior fields
+        full[0:w1, y1_bot:y1_bot + h1] = u1_int
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_int
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_int
 
     else:
         # ---------- 4-room layout ----------
@@ -161,11 +170,11 @@ def stitch_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=False):
         y3_bot = h2 - h3                # Ω3 top = Ω2 top
         y4_bot = y3_bot - h4            # Ω4 top = Ω3 bottom
 
-        # Paste rooms
-        full[0:w1, y1_bot:y1_bot + h1] = u1_full                     # Ω1 left
-        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_full               # Ω2 middle
-        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_full     # Ω3 right-top
-        full[w1 + w2:w1 + w2 + w4, y4_bot:y4_bot + h4] = u4_full     # Ω4 right-below Ω3
+        # Paste interior fields
+        full[0:w1, y1_bot:y1_bot + h1] = u1_int                     # Ω1 left
+        full[w1:w1 + w2, y2_bot:y2_bot + h2] = u2_int               # Ω2 middle
+        full[w1 + w2:w1 + w2 + w3, y3_bot:y3_bot + h3] = u3_int     # Ω3 right-top
+        full[w1 + w2:w1 + w2 + w4, y4_bot:y4_bot + h4] = u4_int     # Ω4 right-below Ω3
 
     return full
 
@@ -186,7 +195,10 @@ def save_combined_apartment(u1_full, u2_full, u3_full, u4_full=None, apt_new=Fal
     os.makedirs(out_dir, exist_ok=True)
 
     plt.figure(figsize=(8, 6))
-    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40, cmap= 'hot')
+    
+    # Use equal aspect and nearest interpolation to avoid thin seams at interfaces
+    plt.imshow(full_map.T, origin="lower", aspect="auto", vmin=5, vmax=40, cmap='hot')
+    #plt.imshow(full_map.T, origin="lower", aspect="equal", vmin=5, vmax=40, cmap='hot', interpolation='nearest')
     plt.colorbar(label="Temperature (°C)")
     plt.title("Full Apartment Temperature Map")
     plt.xlabel("x [m]"); plt.ylabel("y [m]")
